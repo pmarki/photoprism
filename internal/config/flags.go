@@ -26,7 +26,7 @@ var Flags = CliFlags{
 		Flag: &cli.StringFlag{
 			Name:    "auth-mode",
 			Aliases: []string{"a"},
-			Usage:   "authentication `MODE` (public, password)",
+			Usage:   "authentication `MODE` (public, password, header)",
 			Value:   "password",
 			EnvVars: EnvVars("AUTH_MODE"),
 		}}, {

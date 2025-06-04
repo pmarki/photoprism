@@ -174,12 +174,12 @@
                 {{ m.About }}
               </div>
 
-              <div v-if="m.PhotoCount === 1" class="meta-count" @click.stop.prevent="">
-                {{ $gettext(`Contains one picture.`) }}
-              </div>
-              <div v-else-if="m.PhotoCount > 0" class="meta-count" @click.stop.prevent="">
-                {{ $gettext(`Contains %{n} pictures.`, { n: m.PhotoCount }) }}
-              </div>
+<!--              <div v-if="m.PhotoCount === 1" class="meta-count" @click.stop.prevent="">-->
+<!--                {{ $gettext(`Contains one picture.`) }}-->
+<!--              </div>-->
+<!--              <div v-else-if="m.PhotoCount > 0" class="meta-count" @click.stop.prevent="">-->
+<!--                {{ $gettext(`Contains %{n} pictures.`, { n: m.PhotoCount }) }}-->
+<!--              </div>-->
             </div>
           </div>
         </div>

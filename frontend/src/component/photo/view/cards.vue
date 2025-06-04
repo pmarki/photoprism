@@ -11,7 +11,7 @@
           {{ $gettext(`No recently edited pictures`) }}
         </div>
         <div v-else class="font-weight-bold">
-          {{ $gettext(`No pictures found`) }}
+          {{ $gettext(`No pictures`) }}
         </div>
         <div class="mt-2">
           {{ $gettext(`Try again using other filters or keywords.`) }}
@@ -59,14 +59,6 @@
               <button v-if="m.Year > 0" class="action-open-date meta-date text-truncate">
                 <i :title="$gettext('Taken')" class="mdi mdi-calendar-range" />
                 {{ m.getDateString(true) }}
-              </button>
-              <button v-if="m.CameraID > 1 || m.Iso" class="meta-camera action-camera-edit text-truncate">
-                <i class="mdi" :class="m.Type === 'video' ? 'mdi-video-vintage' : 'mdi-camera'" />
-                {{ m.getCameraInfo() }}
-              </button>
-              <button v-if="m.LensID > 1 || m.FocalLength" class="meta-lens action-lens-edit text-truncate">
-                <i class="mdi mdi-camera-iris" />
-                {{ m.getLensInfo() }}
               </button>
               <button v-if="m.Type === 'video'" class="meta-video text-truncate">
                 <i class="mdi mdi-movie" />

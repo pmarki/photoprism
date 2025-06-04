@@ -30,65 +30,65 @@
           v-if="canShare"
           key="action-share"
           :title="$gettext('Share')"
-          icon="mdi-share-variant"
+          prepend-icon="mdi-share-variant"
           color="share"
           density="comfortable"
           :disabled="selection.length !== 1"
           class="action-share"
           @click.stop="shareDialog()"
-        ></v-btn>
+        >{{$gettext('Share')}}</v-btn>
         <v-btn
           v-if="canManage"
           key="action-edit"
           :title="$gettext('Edit')"
-          icon="mdi-pencil"
+          prepend-icon="mdi-pencil"
           color="edit"
           density="comfortable"
           :disabled="selection.length !== 1"
           class="action-edit"
           @click.stop="editDialog()"
-        ></v-btn>
+        >{{$gettext('Edit')}}</v-btn>
         <v-btn
           v-if="canDownload"
           key="action-download"
           :title="$gettext('Download')"
-          icon="mdi-download"
+          prepend-icon="mdi-download"
           color="download"
           density="comfortable"
           class="action-download"
           :disabled="selection.length !== 1"
           @click.stop="download()"
-        ></v-btn>
+        >{{$gettext('Download')}}</v-btn>
         <v-btn
           v-if="canManage"
           key="action-album"
           :title="$gettext('Add to album')"
-          icon="mdi-bookmark"
+          prepend-icon="mdi-bookmark"
           color="album"
           density="comfortable"
           :disabled="selection.length === 0"
           class="action-clone"
           @click.stop="dialog.album = true"
-        ></v-btn>
+        >{{$gettext('Add to album')}}</v-btn>
         <v-btn
           v-if="canDelete && deletable.includes(context)"
           key="action-delete"
           :title="$gettext('Delete')"
-          icon="mdi-delete"
+          prepend-icon="mdi-delete"
           color="remove"
           density="comfortable"
           :disabled="selection.length === 0"
           class="action-delete"
           @click.stop="dialog.delete = true"
-        ></v-btn>
+        >{{$gettext('Delete')}}</v-btn>
         <v-btn
           key="action-close"
-          icon="mdi-close"
+          prepend-icon="mdi-close"
           color="grey-darken-2"
           density="comfortable"
           class="action-clear"
           @click.stop="clearClipboard()"
-        ></v-btn>
+        >Unselect</v-btn>
       </v-speed-dial>
     </div>
     <p-photo-album-dialog

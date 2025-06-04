@@ -25,6 +25,7 @@ import PAlbumClipboard from "component/album/clipboard.vue";
 import PAlbumToolbar from "component/album/toolbar.vue";
 import PAlbumEditDialog from "component/album/edit/dialog.vue";
 import PAlbumDeleteDialog from "component/album/delete/dialog.vue";
+import PAlbumCreateDialog from "component/album/create/dialog.vue";
 
 // Login.
 import PAuthHeader from "component/auth/header.vue";
@@ -32,6 +33,7 @@ import PAuthFooter from "component/auth/footer.vue";
 
 // Sharing.
 import PShareDialog from "component/share/dialog.vue";
+import PWebshareDialog from "component/share/webshare.vue";
 
 // Settings.
 import PSettingsWebdav from "component/settings/webdav.vue";
@@ -67,6 +69,7 @@ import PPhotoEditDialog from "component/photo/edit/dialog.vue";
 
 // Upload.
 import PUploadDialog from "component/upload/dialog.vue";
+import PMoveDialog from "component/photo/move/dialog.vue";
 
 // Services.
 import PServiceAdd from "component/service/add.vue";
@@ -100,17 +103,20 @@ export function install(app) {
   app.component("PAlbumToolbar", PAlbumToolbar);
   app.component("PAlbumEditDialog", PAlbumEditDialog);
   app.component("PAlbumDeleteDialog", PAlbumDeleteDialog);
+  app.component("PAlbumCreateDialog", PAlbumCreateDialog);
 
   app.component("PAuthHeader", PAuthHeader);
   app.component("PAuthFooter", PAuthFooter);
 
   app.component("PShareDialog", PShareDialog);
+  app.component("PWebshareDialog", PWebshareDialog);
 
   app.component("PConfirmDialog", PConfirmDialog);
   app.component("PConfirmSponsor", PConfirmSponsor);
 
   app.component("PFileClipboard", PFileClipboard);
   app.component("PFileDeleteDialog", PFileDeleteDialog);
+  app.component("PMoveDialog", PMoveDialog);
 
   app.component("PLabelClipboard", PLabelClipboard);
   app.component("PLabelDeleteDialog", PLabelDeleteDialog);

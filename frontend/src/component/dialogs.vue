@@ -12,9 +12,8 @@
       :visible="upload.visible"
       :data="upload.data"
       @close="closeUploadDialog"
-      @confirm="closeUploadDialog"
+      @confirm="confirmUploadDialog"
     ></p-upload-dialog>
-    <p-update :visible="update.visible" @close="closeUpdateDialog"></p-update>
     <p-lightbox @enter="onLightboxEnter" @leave="onLightboxLeave"></p-lightbox>
   </div>
 </template>
@@ -23,7 +22,6 @@ import Album from "model/album";
 
 import PPhotoEditDialog from "component/photo/edit/dialog.vue";
 import PUploadDialog from "component/upload/dialog.vue";
-import PUpdate from "component/update.vue";
 import PLightbox from "component/lightbox.vue";
 
 export default {
@@ -31,7 +29,6 @@ export default {
   components: {
     PPhotoEditDialog,
     PUploadDialog,
-    PUpdate,
     PLightbox,
   },
   data() {
@@ -132,6 +129,10 @@ export default {
       if (this.upload.visible) {
         this.upload.visible = false;
       }
+    },
+    confirmUploadDialog() {
+      this.upload.visible = false;
+      setTimeout(() => window.location.reload(), 1000);
     },
     onUpdate() {
       if (this.$view.preventNavigation || this.update.visible || this.lightbox.visible) {

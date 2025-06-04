@@ -78,21 +78,6 @@
           <div class="video-control video-control--duration text-body-2">
             {{ $util.formatRemainingSeconds(video.time, video.duration) }}
           </div>
-          <div v-if="featExperimental && video.castable" class="video-control video-control--cast">
-            <v-icon
-              v-if="video.casting"
-              icon="mdi-cast-connected"
-              class="clickable"
-              @pointerdown.stop.prevent="toggleVideoRemote"
-            ></v-icon>
-            <v-icon
-              v-else
-              icon="mdi-cast"
-              :disabled="video.remote === 'connecting'"
-              class="clickable"
-              @pointerdown.stop.prevent="toggleVideoRemote"
-            ></v-icon>
-          </div>
         </div>
       </div>
       <div v-if="info" ref="sidebar" tabindex="-1" class="p-lightbox__sidebar bg-background">
@@ -108,6 +93,11 @@
       @hide="onHideMenu"
     ></p-lightbox-menu>
   </v-dialog>
+  <p-webshare-dialog
+    :show="dialog.webshare"
+    :items="{ photos: [model.UID] }"
+    @completed="dialog.webshare = false;"
+  ></p-webshare-dialog>
 </template>
 
 <script>
@@ -170,6 +160,9 @@ export default {
       models: [], // Slide models.
       index: 0, // Current slide index in models.
       subscriptions: [], // Event subscriptions.
+      dialog: {
+        webshare: false,
+      },
       // Video properties for rendering the controls.
       video: {
         controls: false,
@@ -1109,6 +1102,13 @@ export default {
     addLightboxControls() {
       const lightbox = this.lightbox;
 
+      // remove zoom button
+      lightbox.addFilter('uiElement', (element, data) => {
+        if (data.name === 'zoom') {
+          element.style.display = 'none';
+        }
+        return element;
+      });
       // Add a sidebar toggle button only if the window is large enough.
       // TODO: Proof-of-concept only, the sidebar needs to be fully implemented before removing the featDevelop check.
       // TODO: Once this is fully implemented, remove the "this.experimental" flag check below.
@@ -1138,24 +1138,22 @@ export default {
         });
 
         // Add information toggle button.
-        if (window.innerWidth > this.mobileBreakpoint) {
-          lightbox.pswp.ui.registerElement({
-            name: "sidebar-button",
-            className: "pswp__button--info-button pswp__button--mdi", // Sets the icon style/size in lightbox.css.
-            title: this.$gettext("Information"),
-            ariaLabel: this.$gettext("Information"),
-            order: 9,
-            isButton: true,
-            html: {
-              isCustomSVG: true,
-              inner:
-                '<path d="M11 7V9H13V7H11M14 17V15H13V11H10V13H11V15H10V17H14M22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2C17.5 2 22 6.5 22 12M20 12C20 7.58 16.42 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12Z" id="pswp__icn-info"/>',
-              outlineID: "pswp__icn-info", // Add this to the <path> in the inner property.
-              size: 24, // Depends on the original SVG viewBox, e.g. use 24 for viewBox="0 0 24 24".
-            },
-            onClick: (ev) => this.onControlClick(ev, this.toggleInfo),
-          });
-        }
+        lightbox.pswp.ui.registerElement({
+          name: "sidebar-button",
+          className: "pswp__button--info-button pswp__button--mdi", // Sets the icon style/size in lightbox.css.
+          title: this.$gettext("Information"),
+          ariaLabel: this.$gettext("Information"),
+          order: 9,
+          isButton: true,
+          html: {
+            isCustomSVG: true,
+            inner:
+              '<path d="M11 7V9H13V7H11M14 17V15H13V11H10V13H11V15H10V17H14M22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2C17.5 2 22 6.5 22 12M20 12C20 7.58 16.42 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12Z" id="pswp__icn-info"/>',
+            outlineID: "pswp__icn-info", // Add this to the <path> in the inner property.
+            size: 24, // Depends on the original SVG viewBox, e.g. use 24 for viewBox="0 0 24 24".
+          },
+          onClick: (ev) => this.onControlClick(ev, this.toggleInfo),
+        });
 
         // Add sound mute/unmute control for videos.
         lightbox.pswp.ui.registerElement({
@@ -1172,40 +1170,6 @@ export default {
           },
           onClick: (ev) => this.onControlClick(ev, this.toggleMute),
         });
-
-        // Add slideshow play/pause toggle control.
-        lightbox.pswp.ui.registerElement({
-          name: "slideshow-toggle",
-          className: "pswp__button--slideshow-toggle pswp__button--mdi", // Sets the icon style/size in lightbox.css.
-          title: this.$gettext("Slideshow"),
-          ariaLabel: this.$gettext("Slideshow"),
-          order: 10,
-          isButton: true,
-          html: {
-            isCustomSVG: true,
-            inner: `<use class="pswp__icn-shadow pswp__icn-slideshow-on" xlink:href="#pswp__icn-slideshow-on"></use><path d="M14,19H18V5H14M6,19H10V5H6V19Z" id="pswp__icn-slideshow-on" class="pswp__icn-slideshow-on" /><use class="pswp__icn-shadow pswp__icn-slideshow-off" xlink:href="#pswp__icn-slideshow-off"></use><path d="M8,5.14V19.14L19,12.14L8,5.14Z" id="pswp__icn-slideshow-off" class="pswp__icn-slideshow-off" />`,
-            size: 24, // Depends on the original SVG viewBox, e.g. use 24 for viewBox="0 0 24 24".
-          },
-          onClick: (ev) => this.onControlClick(ev, this.toggleSlideshow),
-        });
-
-        // Add fullscreen mode toggle control.
-        if (this.canFullscreen) {
-          lightbox.pswp.ui.registerElement({
-            name: "fullscreen-toggle",
-            className: "pswp__button--fullscreen-toggle pswp__button--mdi", // Sets the icon style/size in lightbox.css.
-            title: this.$gettext("Fullscreen"),
-            ariaLabel: this.$gettext("Fullscreen"),
-            order: 10,
-            isButton: true,
-            html: {
-              isCustomSVG: true,
-              inner: `<use class="pswp__icn-shadow pswp__icn-fullscreen-on" xlink:href="#pswp__icn-fullscreen-on"></use><path d="M14,14H19V16H16V19H14V14M5,14H10V19H8V16H5V14M8,5H10V10H5V8H8V5M19,8V10H14V5H16V8H19Z" id="pswp__icn-fullscreen-on" class="pswp__icn-fullscreen-on" /><use class="pswp__icn-shadow pswp__icn-fullscreen-off" xlink:href="#pswp__icn-fullscreen-off"></use><path d="M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z" id="pswp__icn-fullscreen-off" class="pswp__icn-fullscreen-off" />`,
-              size: 24, // Depends on the original SVG viewBox, e.g. use 24 for viewBox="0 0 24 24".
-            },
-            onClick: (ev) => this.onControlClick(ev, this.toggleFullscreen),
-          });
-        }
 
         // Add favorite toggle control if user has permission to use it.
         if (this.canLike) {
@@ -1241,24 +1205,17 @@ export default {
           onClick: (ev) => this.onControlClick(ev, this.toggleSelect),
         });
 
-        // Add edit button control if user has permission to use it.
-        if (this.canEdit) {
-          lightbox.pswp.ui.registerElement({
-            name: "edit-button",
-            className: "pswp__button--edit-button pswp__button--mdi hidden-shared-only", // Sets the icon style/size in lightbox.css.
-            title: this.$gettext("Edit"),
-            ariaLabel: this.$gettext("Edit"),
-            order: 10,
-            isButton: true,
-            html: {
-              isCustomSVG: true,
-              inner: `<path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" id="pswp__icn-edit" />`,
-              outlineID: "pswp__icn-edit", // Add this to the <path> in the inner property.
-              size: 24, // Depends on the original SVG viewBox, e.g. use 24 for viewBox="0 0 24 24".
-            },
-            onClick: (ev) => this.onControlClick(ev, this.onEdit),
-          });
-        }
+        // Add share button control
+        lightbox.pswp.ui.registerElement({
+          name: "share-button",
+          className: "pswp__button--share-button pswp__button--mdi", // Sets the icon style/size in lightbox.css.
+          title: this.$gettext("Share"),
+          ariaLabel: this.$gettext("Share"),
+          order: 11,
+          isButton: true,
+          html: `<i class="mdi-share-variant mdi v-icon notranslate v-theme--nordic v-icon--size-default" aria-hidden="true"></i>`,
+          onClick: (ev) => this.onControlClick(ev, this.onShare),
+        });
 
         // Add an action menu with additional options if there's at least one menu item.
         if (this.menuActions().filter((action) => action.visible).length > 0) {
@@ -1266,7 +1223,7 @@ export default {
             name: "menu-button",
             className: "pswp__button--menu-button pswp__button--mdi", // Sets the icon style/size in lightbox.css.
             ariaLabel: this.$gettext("More options"),
-            order: 10,
+            order: 15,
             isButton: true,
             html: {
               isCustomSVG: true,
@@ -1284,21 +1241,21 @@ export default {
     // Returns the available menu actions.
     menuActions() {
       return [
-        {
-          name: "cover",
-          icon: "mdi-image-album",
-          text: this.$gettext("Set as Album Cover"),
-          disabled: !this.model,
-          visible:
-            this.canManageAlbums &&
-            this.album &&
-            this.album instanceof Album &&
-            !this.model?.Removed &&
-            !this.model?.Archived,
-          click: () => {
-            this.onSetAlbumCover();
-          },
-        },
+        // {
+        //   name: "cover",
+        //   icon: "mdi-image-album",
+        //   text: this.$gettext("Set as Album Cover"),
+        //   disabled: !this.model,
+        //   visible:
+        //     this.canManageAlbums &&
+        //     this.album &&
+        //     this.album instanceof Album &&
+        //     !this.model?.Removed &&
+        //     !this.model?.Archived,
+        //   click: () => {
+        //     this.onSetAlbumCover();
+        //   },
+        // },
         {
           name: "remove",
           icon: "mdi-eject",
@@ -1351,6 +1308,16 @@ export default {
           visible: this.canDownload,
           click: () => {
             this.onDownload();
+          },
+        },
+        {
+          name: "edit",
+          icon: "mdi-pencil",
+          text: this.$gettext("Edit"),
+          disabled: !this.model,
+          visible: this.canEdit,
+          click: () => {
+            this.onEdit();
           },
         },
       ];
@@ -1420,9 +1387,9 @@ export default {
         TODO: Find a good position for the date information that works for all screen sizes and image dimensions.
               We MAY postpone this and display it along with other metadata in the new sidebar.
        */
-      /* if (model.TakenAtLocal) {
-         caption += `<div>${this.$util.formatDate(model.TakenAtLocal)}</div>`;
-      } */
+      if (model.TakenAtLocal) {
+         caption += `<div>${this.$util.formatDate(model.TakenAtLocal, 'date_med')}</div>`;
+      }
 
       if (model.Description && !model.Caption) {
         model.Caption = model.Description;
@@ -2135,6 +2102,12 @@ export default {
 
       new Photo().find(this.model.UID).then((p) => p.downloadAll());
     },
+
+    onShare() {
+      this.pauseLightbox();
+      this.dialog.webshare = true;
+    },
+
     onEdit() {
       this.pauseLightbox();
 

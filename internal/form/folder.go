@@ -20,6 +20,11 @@ type Folder struct {
 	FolderWatch       bool   `json:"Watch"`
 }
 
+// Represents create new folder form
+type NewFolderForm struct {
+	Path string `json:"Path"`
+}
+
 func NewFolder(m interface{}) (f Folder, err error) {
 	err = deepcopier.Copy(m).To(&f)
 

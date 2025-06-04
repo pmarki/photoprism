@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -24,6 +26,134 @@ type FoldersResponse struct {
 	Files     []entity.File   `json:"files,omitempty"`
 	Recursive bool            `json:"recursive,omitempty"`
 	Cached    bool            `json:"cached,omitempty"`
+}
+
+func MoveFiles(router *gin.RouterGroup) {
+	router.PUT("/files/move", func(c *gin.Context) {
+		s := Auth(c, acl.ResourceAlbums, acl.ActionCreate)
+
+		if s.Abort(c) {
+			return
+		}
+		conf := get.Config()
+		root := conf.OriginalsPath()
+		var frm form.MoveFiles
+
+		err := c.BindJSON(&frm)
+
+		if err != nil {
+			AbortBadRequest(c)
+			return
+		}
+
+		for _, v := range frm.Files {
+			file, err := entity.PrimaryFile(v.PhotoUID)
+			if err != nil {
+				log.Errorf("failed to move photo: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+
+			sourcePath := filepath.Join(root, file.FileName)
+			destPath := filepath.Join(root, v.Destination, file.Base(0))
+
+			log.Infof("Moving file %s to %s", sourcePath, destPath)
+
+			inputFile, err := os.Open(sourcePath)
+			if err != nil {
+				log.Errorf("failed to move photo: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+			defer inputFile.Close()
+
+			outputFile, err := os.Create(destPath)
+			if err != nil {
+				log.Errorf("failed to move photo: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+			defer outputFile.Close()
+
+			_, err = io.Copy(outputFile, inputFile)
+			if err != nil {
+				log.Errorf("failed to move photo: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+
+			inputFile.Close()
+
+			err = os.Remove(sourcePath)
+			if err != nil {
+				log.Errorf("failed to move photo: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+
+			err = file.Rename(filepath.Join(v.Destination, file.Base(0)), file.FileRoot, v.Destination, file.RelatedPhoto().PhotoName)
+			if err != nil {
+				log.Errorf("failed to rename file: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+
+		}
+
+		c.JSON(http.StatusOK, http.Response{})
+	})
+}
+
+func CreateNewFolder(router *gin.RouterGroup) {
+	router.PUT("/folder/create", func(c *gin.Context) {
+		s := Auth(c, acl.ResourceAlbums, acl.ActionCreate)
+
+		if s.Abort(c) {
+			return
+		}
+		conf := get.Config()
+		var frm form.NewFolderForm
+
+		err := c.BindJSON(&frm)
+
+		if err != nil {
+			AbortBadRequest(c)
+			return
+		}
+
+		root := conf.OriginalsPath()
+		log.Infof("creating folder %s", clean.Log(filepath.Join(root, frm.Path)))
+
+		// Join the path and folder name into a full path
+		fullPath := filepath.Join(root, frm.Path)
+
+		// Check if the folder already exists
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			// Create the folder and any necessary parents
+			err := os.MkdirAll(fullPath, os.ModePerm)
+			if err != nil {
+				log.Errorf("failed to create folder: %w", err)
+				AbortUnexpectedError(c)
+				return
+			}
+		} else {
+			log.Errorf("Folder already exists: %s", fullPath)
+			AbortUnexpectedError(c)
+			return
+		}
+
+		folder := entity.NewFolder(entity.RootOriginals, frm.Path, entity.Now())
+
+		if err := folder.Create(); err != nil {
+			// Report unexpected error.
+			log.Errorf("folder create: %s)", err)
+			AbortUnexpectedError(c)
+			return
+		}
+
+		c.JSON(http.StatusOK, folder)
+	})
+
 }
 
 // SearchFoldersOriginals returns folders in originals as JSON.

@@ -11,7 +11,7 @@
           {{ $gettext(`No recently edited pictures`) }}
         </div>
         <div v-else class="font-weight-bold">
-          {{ $gettext(`No pictures found`) }}
+          {{ $gettext(`No pictures.`) }}
         </div>
         <div class="mt-2">
           {{ $gettext(`Try again using other filters or keywords.`) }}

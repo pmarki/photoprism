@@ -63,3 +63,6 @@ export const useMkvAv1 = useVideo // AV1 in MKV, Main Profile 10-bit HDR
 export const useTheora = useVideo // Ogg Theora
   ? !!document.createElement("video").canPlayType(media.ContentTypeOgg)
   : false;
+
+export const canUseWebshareApi =
+  navigator.canShare && navigator.canShare({ files: [new File([], "empty.jpg")] });

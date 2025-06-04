@@ -280,7 +280,7 @@ func TestIndexedFiles(t *testing.T) {
 }
 
 func TestOrphanFiles(t *testing.T) {
-	files, err := OrphanFiles()
+	files, err := OriginalFiles()
 
 	if err != nil {
 		t.Fatal(err)

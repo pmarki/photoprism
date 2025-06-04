@@ -245,3 +245,11 @@ func (m *Folder) SetForm(frm form.Folder) error {
 
 	return nil
 }
+
+func (m *Folder) Delete() error {
+	if err := UnscopedDb().Delete(m).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

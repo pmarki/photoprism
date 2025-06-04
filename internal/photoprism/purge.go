@@ -287,7 +287,7 @@ func (w *Purge) Start(opt PurgeOptions) (purgedFiles map[string]bool, purgedPhot
 
 	// Remove orphan index entries.
 	if opt.Dry {
-		if files, err := query.OrphanFiles(); err != nil {
+		if files, err := query.OriginalFiles(); err != nil {
 			log.Errorf("index: %s (find orphan files)", err)
 		} else if l := len(files); l > 0 {
 			log.Infof("index: found %s", english.Plural(l, "orphan file", "orphan files"))
@@ -295,7 +295,7 @@ func (w *Purge) Start(opt PurgeOptions) (purgedFiles map[string]bool, purgedPhot
 			log.Infof("index: found no orphan files")
 		}
 	} else {
-		if err = query.PurgeOrphans(); err != nil {
+		if err = query.PurgeOrphans(originalsPath); err != nil {
 			log.Errorf("index: %s (purge orphans)", err)
 		}
 

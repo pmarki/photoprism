@@ -11,6 +11,15 @@ type File struct {
 	FileOrientation int `json:"Orientation"`
 }
 
+type MoveFile struct {
+	PhotoUID    string `json:"PhotoUID"`
+	Destination string `json:"Dest"`
+}
+
+type MoveFiles struct {
+	Files []MoveFile `json:"Files"`
+}
+
 // Orientation returns the Exif orientation value within a valid range or 0 if it is invalid.
 func (f *File) Orientation() int {
 	return clean.Orientation(f.FileOrientation)

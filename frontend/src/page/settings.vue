@@ -1,6 +1,17 @@
 <template>
   <div ref="page" tabindex="1" class="p-page p-page-settings" :class="$config.aclClasses('settings')">
-    <v-tabs v-model="active" :height="$vuetify.display.smAndDown ? 48 : 64" class="p-page__navigation">
+    <p-navigation>
+      <template v-slot:title>
+        <span class="text-capitalize">{{ this.$route.name }}</span>
+      </template>
+
+      <template v-slot:menu-icons>
+      </template>
+      <template v-slot:menu-actions>
+      </template>
+
+    </p-navigation>
+    <v-tabs v-model="active" :height="$vuetify.display.smAndDown ? 48 : 64">
       <v-tab v-for="t in tabs" :id="'tab-' + t.name" :key="t.name" :class="t.class" ripple @click="changePath(t.path)">
         <v-icon v-if="$vuetify.display.smAndDown" :title="t.label">{{ t.icon }}</v-icon>
         <template v-else>
@@ -26,6 +37,9 @@ import Services from "page/settings/services.vue";
 import Account from "page/settings/account.vue";
 import { $config } from "app/session";
 import { markRaw } from "vue";
+import Index from "./library/index.vue";
+import PActionMenu from "../component/action/menu.vue";
+import PNavigation from "../component/navigation.vue";
 
 function initTabs(flag, tabs) {
   let i = 0;
@@ -40,6 +54,7 @@ function initTabs(flag, tabs) {
 
 export default {
   name: "PPageSettings",
+  components: { PNavigation, PActionMenu },
   props: {
     tab: {
       type: String,
@@ -52,6 +67,18 @@ export default {
     const isSuperAdmin = this.$session.isSuperAdmin();
 
     const tabs = [
+      {
+        name: "library_index",
+        component: markRaw(Index),
+        label: this.$gettext("Index"),
+        class: "",
+        path: "/settings/index",
+        icon: "mdi-film",
+        readonly: true,
+        demo: true,
+        admin: true,
+        show: true,
+      },
       {
         name: "settings_general",
         component: markRaw(General),

@@ -1,145 +1,158 @@
 <template>
   <div ref="page" tabindex="1" class="p-page p-page-albums not-selectable" :class="$config.aclClasses('albums')">
-    <v-form
-      ref="form"
-      validate-on="invalid-input"
-      class="p-albums-search p-page__navigation"
-      @submit.prevent="updateQuery()"
-    >
-      <v-toolbar
-        flat
-        :density="$vuetify.display.smAndDown ? 'compact' : 'default'"
-        color="secondary"
-        class="page-toolbar"
-      >
-        <v-text-field
-          :model-value="filter.q"
-          :density="density"
-          tabindex="1"
-          hide-details
-          clearable
-          overflow
-          single-line
-          rounded="pill"
-          variant="solo-filled"
-          color="surface-variant"
-          validate-on="invalid-input"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="none"
-          :prepend-inner-icon="canExpand ? 'mdi-tune' : 'mdi-magnify'"
-          :placeholder="$gettext('Search')"
-          class="input-search background-inherit elevation-0"
-          :class="{ 'input-search--expanded': expanded, 'input-search--focus': !canExpand }"
-          @update:model-value="
-            (v) => {
-              updateFilter({ q: v });
-            }
-          "
-          @keyup.enter="() => updateQuery()"
-          @keyup.esc.exact="() => hideExpansionPanel()"
-          @click:prepend-inner.stop="toggleExpansionPanel"
-          @click:clear="
-            () => {
-              updateQuery({ q: '' });
-            }
-          "
-        ></v-text-field>
+    <p-navigation>
+      <template v-slot:title>
+        <span class="text-capitalize">{{ this.$route.name }}</span>
+      </template>
 
-        <v-btn
-          v-if="canManage && staticFilter.type === 'album'"
-          :title="$gettext('Add Album')"
-          tabindex="2"
-          icon="mdi-plus"
-          class="action-add ms-1"
-          @click.prevent="create()"
-        ></v-btn>
+      <template v-slot:menu-icons>
 
-        <p-action-menu
-          v-if="$vuetify.display.mdAndUp"
-          :items="menuActions"
-          :tabindex="3"
-          button-class="ms-1"
-        ></p-action-menu>
-      </v-toolbar>
+      </template>
+      <template v-slot:menu-actions>
+        <p-action-menu :items="menuActions" button-class="ms-1"></p-action-menu>
+      </template>
 
-      <div class="toolbar-expansion-panel">
-        <v-expand-transition>
-          <v-card v-show="expanded" flat color="secondary">
-            <v-card-text class="dense">
-              <v-row dense>
-                <v-col cols="12" sm="4" class="p-year-select">
-                  <v-select
-                    :model-value="filter.year"
-                    :label="$gettext('Year')"
-                    :disabled="context === 'state'"
-                    :menu-props="{ maxHeight: 346 }"
-                    tabindex="4"
-                    single-line
-                    hide-details
-                    variant="solo-filled"
-                    :density="density"
-                    :items="yearOptions()"
-                    item-title="text"
-                    item-value="value"
-                    @update:model-value="
-                      (v) => {
-                        updateQuery({ year: v });
-                      }
-                    "
-                  >
-                  </v-select>
-                </v-col>
-                <v-col cols="12" sm="4" class="p-category-select">
-                  <v-select
-                    :model-value="filter.category"
-                    :label="$gettext('Category')"
-                    :menu-props="{ maxHeight: 346 }"
-                    tabindex="5"
-                    single-line
-                    hide-details
-                    variant="solo-filled"
-                    :density="density"
-                    :items="categories"
-                    item-title="text"
-                    item-value="value"
-                    @update:model-value="
-                      (v) => {
-                        updateQuery({ category: v });
-                      }
-                    "
-                  >
-                  </v-select>
-                </v-col>
-                <v-col cols="12" sm="4" class="p-sort-select">
-                  <v-select
-                    :model-value="filter.order"
-                    :label="$gettext('Sort Order')"
-                    :menu-props="{ maxHeight: 400 }"
-                    tabindex="6"
-                    single-line
-                    hide-details
-                    variant="solo-filled"
-                    :density="density"
-                    :items="
-                      context === 'album' ? options.sorting : options.sorting.filter((item) => item.value !== 'edited')
-                    "
-                    item-title="text"
-                    item-value="value"
-                    @update:model-value="
-                      (v) => {
-                        updateQuery({ order: v });
-                      }
-                    "
-                  >
-                  </v-select>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-expand-transition>
-      </div>
-    </v-form>
+    </p-navigation>
+<!--    <v-form-->
+<!--      ref="form"-->
+<!--      validate-on="invalid-input"-->
+<!--      class="p-albums-search p-page__navigation"-->
+<!--      @submit.prevent="updateQuery()"-->
+<!--    >-->
+<!--      <v-toolbar-->
+<!--        flat-->
+<!--        :density="$vuetify.display.smAndDown ? 'compact' : 'default'"-->
+<!--        color="secondary"-->
+<!--        class="page-toolbar"-->
+<!--      >-->
+<!--        <v-text-field-->
+<!--          :model-value="filter.q"-->
+<!--          :density="density"-->
+<!--          tabindex="1"-->
+<!--          hide-details-->
+<!--          clearable-->
+<!--          overflow-->
+<!--          single-line-->
+<!--          rounded="pill"-->
+<!--          variant="solo-filled"-->
+<!--          color="surface-variant"-->
+<!--          validate-on="invalid-input"-->
+<!--          autocomplete="off"-->
+<!--          autocorrect="off"-->
+<!--          autocapitalize="none"-->
+<!--          :prepend-inner-icon="canExpand ? 'mdi-tune' : 'mdi-magnify'"-->
+<!--          :placeholder="$gettext('Search')"-->
+<!--          class="input-search background-inherit elevation-0"-->
+<!--          :class="{ 'input-search&#45;&#45;expanded': expanded, 'input-search&#45;&#45;focus': !canExpand }"-->
+<!--          @update:model-value="-->
+<!--            (v) => {-->
+<!--              updateFilter({ q: v });-->
+<!--            }-->
+<!--          "-->
+<!--          @keyup.enter="() => updateQuery()"-->
+<!--          @keyup.esc.exact="() => hideExpansionPanel()"-->
+<!--          @click:prepend-inner.stop="toggleExpansionPanel"-->
+<!--          @click:clear="-->
+<!--            () => {-->
+<!--              updateQuery({ q: '' });-->
+<!--            }-->
+<!--          "-->
+<!--        ></v-text-field>-->
+
+<!--        <v-btn-->
+<!--          v-if="canManage && staticFilter.type === 'album'"-->
+<!--          :title="$gettext('Add Album')"-->
+<!--          tabindex="2"-->
+<!--          icon="mdi-plus"-->
+<!--          class="action-add ms-1"-->
+<!--          @click.prevent="create()"-->
+<!--        ></v-btn>-->
+
+<!--        <p-action-menu-->
+<!--          v-if="$vuetify.display.mdAndUp"-->
+<!--          :items="menuActions"-->
+<!--          :tabindex="3"-->
+<!--          button-class="ms-1"-->
+<!--        ></p-action-menu>-->
+<!--      </v-toolbar>-->
+
+<!--      <div class="toolbar-expansion-panel">-->
+<!--        <v-expand-transition>-->
+<!--          <v-card v-show="expanded" flat color="secondary">-->
+<!--            <v-card-text class="dense">-->
+<!--              <v-row dense>-->
+<!--                <v-col cols="12" sm="4" class="p-year-select">-->
+<!--                  <v-select-->
+<!--                    :model-value="filter.year"-->
+<!--                    :label="$gettext('Year')"-->
+<!--                    :disabled="context === 'state'"-->
+<!--                    :menu-props="{ maxHeight: 346 }"-->
+<!--                    tabindex="4"-->
+<!--                    single-line-->
+<!--                    hide-details-->
+<!--                    variant="solo-filled"-->
+<!--                    :density="density"-->
+<!--                    :items="yearOptions()"-->
+<!--                    item-title="text"-->
+<!--                    item-value="value"-->
+<!--                    @update:model-value="-->
+<!--                      (v) => {-->
+<!--                        updateQuery({ year: v });-->
+<!--                      }-->
+<!--                    "-->
+<!--                  >-->
+<!--                  </v-select>-->
+<!--                </v-col>-->
+<!--                <v-col cols="12" sm="4" class="p-category-select">-->
+<!--                  <v-select-->
+<!--                    :model-value="filter.category"-->
+<!--                    :label="$gettext('Category')"-->
+<!--                    :menu-props="{ maxHeight: 346 }"-->
+<!--                    tabindex="5"-->
+<!--                    single-line-->
+<!--                    hide-details-->
+<!--                    variant="solo-filled"-->
+<!--                    :density="density"-->
+<!--                    :items="categories"-->
+<!--                    item-title="text"-->
+<!--                    item-value="value"-->
+<!--                    @update:model-value="-->
+<!--                      (v) => {-->
+<!--                        updateQuery({ category: v });-->
+<!--                      }-->
+<!--                    "-->
+<!--                  >-->
+<!--                  </v-select>-->
+<!--                </v-col>-->
+<!--                <v-col cols="12" sm="4" class="p-sort-select">-->
+<!--                  <v-select-->
+<!--                    :model-value="filter.order"-->
+<!--                    :label="$gettext('Sort Order')"-->
+<!--                    :menu-props="{ maxHeight: 400 }"-->
+<!--                    tabindex="6"-->
+<!--                    single-line-->
+<!--                    hide-details-->
+<!--                    variant="solo-filled"-->
+<!--                    :density="density"-->
+<!--                    :items="-->
+<!--                      context === 'album' ? options.sorting : options.sorting.filter((item) => item.value !== 'edited')-->
+<!--                    "-->
+<!--                    item-title="text"-->
+<!--                    item-value="value"-->
+<!--                    @update:model-value="-->
+<!--                      (v) => {-->
+<!--                        updateQuery({ order: v });-->
+<!--                      }-->
+<!--                    "-->
+<!--                  >-->
+<!--                  </v-select>-->
+<!--                </v-col>-->
+<!--              </v-row>-->
+<!--            </v-card-text>-->
+<!--          </v-card>-->
+<!--        </v-expand-transition>-->
+<!--      </div>-->
+<!--    </v-form>-->
 
     <div v-if="loading" class="p-page__loading">
       <p-loading></p-loading>
@@ -191,7 +204,7 @@
           v-if="canManage && staticFilter.type === 'album' && config.count.albums === 0"
           class="d-flex justify-center mt-8 mb-4"
         >
-          <v-btn color="secondary" rounded variant="flat" class="action-add" @click.prevent="create">
+          <v-btn color="secondary" rounded variant="flat" class="action-add" @click.prevent="dialog.create = true">
             {{ $gettext(`Add Album`) }}
           </v-btn>
         </div>
@@ -277,6 +290,15 @@
                 {{ album.getDateString() }}
               </button>
               <button
+                v-else-if="album.Type === 'folder'"
+                :title="album.Title"
+                class="action-title-edit meta-title"
+                :data-uid="album.UID"
+                @click.stop.prevent="edit(album)"
+              >
+                {{ album.Path }}
+              </button>
+              <button
                 v-else-if="album.Title"
                 :title="album.Title"
                 class="action-title-edit meta-title"
@@ -285,7 +307,6 @@
               >
                 {{ album.Title }}
               </button>
-
               <button
                 v-if="album.Description"
                 :title="$gettext('Description')"
@@ -294,31 +315,7 @@
               >
                 {{ album.Description }}
               </button>
-              <button
-                v-else-if="album.Type === 'album' && !album.PhotoCount"
-                class="meta-description"
-                @click.stop.prevent="$router.push({ name: 'browse' })"
-              >
-                {{ $gettext(`Add pictures from search results by selecting them.`) }}
-              </button>
-
-              <div v-if="album.PhotoCount === 1" class="meta-count" @click.stop.prevent="">
-                {{ $gettext(`Contains one picture.`) }}
-              </div>
-              <div v-else-if="album.PhotoCount > 0" class="meta-count" @click.stop.prevent="">
-                {{ $gettext(`Contains %{n} pictures.`, { n: album.PhotoCount }) }}
-              </div>
-
               <div class="meta-details">
-                <button
-                  v-if="album.Type === 'folder'"
-                  :title="'/' + album.Path"
-                  class="meta-path"
-                  @click.exact="edit(album)"
-                >
-                  <i class="mdi mdi-folder" />
-                  /{{ album.Path }}
-                </button>
                 <button
                   v-if="album.Category !== ''"
                   :title="album.Category"
@@ -356,6 +353,7 @@
       @confirm="dialog.upload = false"
     ></p-service-upload>
     <p-album-edit-dialog :visible="dialog.edit" :album="model" @close="dialog.edit = false"></p-album-edit-dialog>
+    <p-album-create-dialog :visible="dialog.create" @close="dialog.create = false"></p-album-create-dialog>
   </div>
 </template>
 
@@ -370,10 +368,15 @@ import * as options from "options/options";
 
 import PLoading from "component/loading.vue";
 import PActionMenu from "component/action/menu.vue";
+import PNavigation from "../component/navigation.vue";
+import Folder from "../model/folder";
+import PAlbumCreateDialog from "../component/album/create/dialog.vue";
 
 export default {
   name: "PPageAlbums",
   components: {
+    PAlbumCreateDialog,
+    PNavigation,
     PLoading,
     PActionMenu,
   },
@@ -417,6 +420,7 @@ export default {
       expanded: false,
       experimental: this.$config.get("experimental") && !this.$config.ce(),
       canUpload: this.$config.allow("files", "upload") && features.upload,
+      canCreate: this.$config.allow("files", "upload") && features.upload,
       canShare: this.$config.allow("albums", "share") && features.share,
       canManage: this.$config.allow("albums", "manage"),
       canEdit: this.$config.allow("albums", "update"),
@@ -449,6 +453,7 @@ export default {
         share: false,
         upload: false,
         edit: false,
+        create: false,
       },
       model: new Album(false),
       all: {
@@ -527,6 +532,9 @@ export default {
     this.$view.leave(this);
   },
   methods: {
+    createNew() {
+      this.dialog.create = true;
+    },
     menuActions() {
       return [
         {
@@ -547,6 +555,15 @@ export default {
           visible: this.canUpload,
           click: () => {
             this.showUpload();
+          },
+        },
+        {
+          name: "Create",
+          icon: "mdi-plus",
+          text: this.$gettext("Add New"),
+          visible: this.canCreate,
+          click: () => {
+            this.createNew();
           },
         },
       ];

@@ -16,6 +16,7 @@ import (
 const (
 	AuthModePublic = "public"
 	AuthModePasswd = "password"
+	AuthModeHeader = "header"
 )
 
 func isBcrypt(s string) bool {
@@ -37,6 +38,10 @@ func (c *Config) SetAuthMode(mode string) {
 		c.options.AuthMode = AuthModePublic
 		c.options.Public = true
 		entity.ValidateTokens = false
+	case AuthModeHeader:
+		c.options.AuthMode = AuthModeHeader
+		c.options.Public = false
+		entity.ValidateTokens = true
 	default:
 		c.options.AuthMode = AuthModePasswd
 		c.options.Public = false
@@ -58,6 +63,8 @@ func (c *Config) AuthMode() string {
 	switch c.options.AuthMode {
 	case AuthModePublic:
 		return AuthModePublic
+	case AuthModeHeader:
+		return AuthModeHeader
 	default:
 		return AuthModePasswd
 	}

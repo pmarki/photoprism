@@ -296,11 +296,23 @@ func ProcessUserUpload(router *gin.RouterGroup) {
 		}
 
 		imp := get.Import()
-
+		log.Warnf("--Processing PUT %s", frm.Folder)
 		// Get destination folder.
 		var destFolder string
 		if destFolder = s.User().GetUploadPath(); destFolder == "" {
 			destFolder = conf.ImportDest()
+			log.Warnf("--dest Folder %s", destFolder)
+		}
+
+		if frm.Folder != "" {
+			dir, err := query.AlbumByUID(frm.Folder)
+			if err == nil {
+				destFolder = dir.AlbumPath
+				log.Warnf("--Folder path %s", dir.AlbumPath)
+
+			} else {
+				log.Errorf("Upload: cant get album by UUID %s, %s", frm.Folder, err)
+			}
 		}
 
 		// Move uploaded files to the destination folder.

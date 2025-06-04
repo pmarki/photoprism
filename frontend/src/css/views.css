@@ -606,7 +606,6 @@
 
 .cards-view .input-select,
 .mosaic-view .input-select {
-    visibility: hidden;
     opacity: 0.6;
     right: 0;
     bottom: 0;
@@ -808,6 +807,14 @@
     height: 100%;
     max-width: 50%;
     border-radius: 0;
+}
+
+.timeline {
+    background-color: rgb(var(--v-theme-background)) !important;
+}
+
+.timeline .v-btn {
+    text-transform: capitalize;
 }
 
 .list-view td.is-selected,

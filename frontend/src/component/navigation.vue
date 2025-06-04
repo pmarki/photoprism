@@ -1,7 +1,7 @@
 <template>
-  <div id="p-navigation" :class="{ 'sidenav-visible': drawer }">
+  <div id="p-navigation" class="p-page__navigation" :class="{ 'sidenav-visible': drawer }">
     <template v-if="visible">
-      <template v-if="$vuetify.display.smAndDown">
+      <template v-if="$vuetify.display.xlAndDown || $vuetify.display.xlAndUp">
         <v-toolbar
           position="fixed"
           flat
@@ -14,15 +14,12 @@
             <img :src="appIcon" :alt="appName" :class="{ 'animate-hue': indexing }" />
           </v-btn>
           <v-toolbar-title class="nav-toolbar-title">
-            <span :class="{ clickable: auth }" @click.stop.prevent="toggleDrawer">{{ page.title }}</span>
+            <slot name="title">
+              <span :class="{ clickable: auth }" @click.stop.prevent="toggleDrawer">{{ page.title }}</span>
+            </slot>
           </v-toolbar-title>
-          <v-btn
-            icon="mdi-dots-vertical"
-            variant="text"
-            class="nav-mobile-menu-trigger elevation-0"
-            :ripple="false"
-            @click.stop.prevent="speedDial = true"
-          ></v-btn>
+          <slot name="menu-icons"></slot>
+          <slot name="menu-actions"></slot>
         </v-toolbar>
       </template>
       <template v-else-if="!auth">
@@ -38,6 +35,7 @@
           <v-toolbar-title class="nav-toolbar-title">
             {{ page.title }}
           </v-toolbar-title>
+
           <v-btn
             icon="mdi-dots-vertical"
             variant="text"
@@ -51,6 +49,7 @@
         v-if="auth"
         v-model="drawer"
         :rail="isMini"
+        temporary
         color="navigation"
         class="nav-sidebar navigation"
       >
@@ -120,7 +119,7 @@
               <v-list-item to="/browse" variant="text" class="nav-browse activator" @click.stop="">
                 <v-list-item-title class="nav-menu-item">
                   <p class="nav-item-title">
-                    {{ $gettext(`Search`) }}
+                    {{ $gettext(`Show all`) }}
                   </p>
                   <span v-if="config.count.all > 0" class="nav-count-group">{{ config.count.all }}</span>
                 </v-list-item-title>
@@ -132,82 +131,12 @@
                     <v-icon>mdi-magnify</v-icon>
                   </v-list-item>
                 </template>
-
-                <v-list-item
-                  :to="{ name: 'browse', query: { q: 'mono:true quality:3 photo:true' } }"
-                  :exact="true"
-                  variant="text"
-                  class="nav-monochrome"
-                  @click.stop=""
-                >
+                <v-list-item :to="{ name: 'videos' }" variant="text" class="nav-video nav-videos" @click.stop="">
                   <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Monochrome`) }}
+                    {{ $gettext(`Videos`) }}
                   </v-list-item-title>
+                  <span v-show="config.count.videos > 0" class="nav-count-item">{{ config.count.videos }}</span>
                 </v-list-item>
-
-                <v-list-item
-                  :to="{ name: 'browse', query: { q: 'panoramas' } }"
-                  :exact="true"
-                  variant="text"
-                  class="nav-panoramas"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Panoramas`) }}
-                  </v-list-item-title>
-                </v-list-item>
-
-                <v-list-item
-                  :to="{ name: 'photos', query: { q: 'stacks' } }"
-                  :exact="true"
-                  variant="text"
-                  class="nav-stacks"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Stacks`) }}
-                  </v-list-item-title>
-                </v-list-item>
-
-                <v-list-item
-                  v-show="isSponsor"
-                  :to="{ name: 'browse', query: { q: 'vectors' } }"
-                  :exact="true"
-                  variant="text"
-                  class="nav-vectors"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Vectors`) }}
-                  </v-list-item-title>
-                </v-list-item>
-
-                <v-list-item
-                  :to="{ name: 'photos', query: { q: 'scans' } }"
-                  :exact="true"
-                  variant="text"
-                  class="nav-scans"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Scans`) }}
-                  </v-list-item-title>
-                </v-list-item>
-
-                <v-list-item
-                  v-show="config.count.documents > 0"
-                  :to="{ name: 'browse', query: { q: 'documents' } }"
-                  :exact="true"
-                  variant="text"
-                  class="nav-documents"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Documents`) }}
-                  </v-list-item-title>
-                  <span v-show="config.count.documents > 0" class="nav-count-item">{{ config.count.documents }}</span>
-                </v-list-item>
-
                 <v-list-item
                   v-if="canManagePhotos"
                   v-show="$config.feature('review')"
@@ -303,64 +232,6 @@
             >
               <v-icon class="ma-auto">mdi-play-circle</v-icon>
             </v-list-item>
-            <div v-else-if="!isMini && $config.feature('videos')">
-              <v-list-item to="/media" variant="text" class="nav-media activator" @click.stop="">
-                <v-list-item-title class="nav-menu-item">
-                  <p class="nav-item-title">
-                    {{ $gettext(`Media`) }}
-                  </p>
-                  <span v-show="config.count.media > 0" class="nav-count-group">{{ config.count.media }}</span>
-                </v-list-item-title>
-              </v-list-item>
-
-              <v-list-group>
-                <template #activator="{ props }">
-                  <v-list-item v-bind="props" variant="text" class="nav-video" @click.stop="">
-                    <v-icon>mdi-play-circle</v-icon>
-                  </v-list-item>
-                </template>
-
-                <v-list-item :to="{ name: 'videos' }" variant="text" class="nav-video nav-videos" @click.stop="">
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Videos`) }}
-                  </v-list-item-title>
-                  <span v-show="config.count.videos > 0" class="nav-count-item">{{ config.count.videos }}</span>
-                </v-list-item>
-
-                <v-list-item :to="{ name: 'live' }" variant="text" class="nav-live" @click.stop="">
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Live Photos`) }}
-                  </v-list-item-title>
-                  <span v-show="config.count.live > 0" class="nav-count-item">{{ config.count.live }}</span>
-                </v-list-item>
-
-                <v-list-item
-                  v-show="config.count.audio > 0"
-                  :to="{ name: 'audio' }"
-                  variant="text"
-                  class="nav-audio"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Audio`) }}
-                  </v-list-item-title>
-                  <span class="nav-count-item">{{ config.count.audio }}</span>
-                </v-list-item>
-
-                <v-list-item
-                  v-show="config.count.animated > 0"
-                  :to="{ name: 'animated' }"
-                  variant="text"
-                  class="nav-animated"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Animated`) }}
-                  </v-list-item-title>
-                  <span v-show="config.count.animated > 0" class="nav-count-item">{{ config.count.animated }}</span>
-                </v-list-item>
-              </v-list-group>
-            </div>
 
             <v-list-item
               v-if="isMini && $config.feature('people') && (canManagePeople || config.count.people > 0)"
@@ -591,68 +462,6 @@
               <span v-show="config.count.folders > 0" class="nav-count-item">{{ config.count.folders }}</span>
             </v-list-item>
 
-            <v-list-item
-              v-if="isMini && $config.feature('library')"
-              :to="{ name: 'library_index' }"
-              variant="text"
-              class="nav-library"
-              :ripple="false"
-              @click.stop=""
-            >
-              <v-icon class="ma-auto">mdi-film</v-icon>
-            </v-list-item>
-            <div v-else-if="!isMini && $config.feature('library')">
-              <v-list-item
-                :to="{ name: 'library_index' }"
-                variant="text"
-                class="nav-library activator"
-                :ripple="false"
-                @click.stop=""
-              >
-                <v-list-item-title class="nav-menu-item">
-                  <p class="nav-item-title">
-                    {{ $gettext(`Library`) }}
-                  </p>
-                </v-list-item-title>
-              </v-list-item>
-
-              <v-list-group>
-                <template #activator="{ props }">
-                  <v-list-item v-bind="props" variant="text" class="nav-library" @click.stop="">
-                    <v-icon>mdi-film</v-icon>
-                  </v-list-item>
-                </template>
-
-                <v-list-item
-                  v-show="$config.feature('files')"
-                  to="/index/files"
-                  variant="text"
-                  class="nav-originals"
-                  @click.stop=""
-                >
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Originals`) }}
-                  </v-list-item-title>
-                  <span v-show="config.count.files > 0 && canAccessPrivate" class="nav-count-item">{{
-                    config.count.files
-                  }}</span>
-                </v-list-item>
-
-                <v-list-item :to="{ name: 'hidden' }" variant="text" class="nav-hidden" @click.stop="">
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Hidden`) }}
-                  </v-list-item-title>
-                  <span v-show="config.count.hidden > 0" class="nav-count-item">{{ config.count.hidden }}</span>
-                </v-list-item>
-
-                <v-list-item :to="{ name: 'errors' }" variant="text" class="nav-errors" @click.stop="">
-                  <v-list-item-title :class="`nav-menu-item menu-item`">
-                    {{ $gettext(`Errors`) }}
-                  </v-list-item-title>
-                </v-list-item>
-              </v-list-group>
-            </div>
-
             <template v-if="!config.disable.settings">
               <v-list-item
                 v-if="isMini"
@@ -665,91 +474,6 @@
               >
                 <v-icon class="ma-auto">mdi-cog</v-icon>
               </v-list-item>
-              <div v-else-if="!isMini" v-show="$config.feature('settings')">
-                <v-list-item :to="{ name: 'settings' }" variant="text" class="nav-settings activator" @click.stop="">
-                  <v-list-item-title class="nav-menu-item">
-                    <p class="nav-item-title">
-                      {{ $gettext(`Settings`) }}
-                    </p>
-                  </v-list-item-title>
-                </v-list-item>
-
-                <v-list-group>
-                  <template #activator="{ props }">
-                    <v-list-item v-bind="props" variant="text" class="nav-settings" @click.stop="">
-                      <v-icon>mdi-cog</v-icon>
-                    </v-list-item>
-                  </template>
-
-                  <v-list-item
-                    v-if="canManageUsers"
-                    :to="{ path: '/admin/users' }"
-                    :exact="false"
-                    variant="text"
-                    class="nav-admin-users"
-                    :ripple="false"
-                    @click.stop=""
-                  >
-                    <v-list-item-title :class="`menu-item`">
-                      {{ $gettext(`Users`) }}
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item
-                    v-show="featFeedback"
-                    :to="{ name: 'feedback' }"
-                    :exact="true"
-                    variant="text"
-                    class="nav-feedback"
-                    :ripple="false"
-                    @click.stop=""
-                  >
-                    <v-list-item-title :class="`menu-item`">
-                      {{ $gettext(`Feedback`) }}
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item
-                    :to="{ name: 'license' }"
-                    :exact="true"
-                    variant="text"
-                    class="nav-license"
-                    :ripple="false"
-                    @click.stop=""
-                  >
-                    <v-list-item-title :class="`menu-item`">
-                      {{ $gettext(`License`) }}
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item
-                    v-if="featUpgrade && !featMembership"
-                    :to="{ name: 'upgrade' }"
-                    variant="text"
-                    class="nav-upgrade"
-                    :exact="true"
-                    :ripple="false"
-                    @click.stop=""
-                  >
-                    <v-list-item-title :class="`menu-item`">
-                      {{ $gettext(`Upgrade`) }}
-                    </v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item
-                    :to="{ name: 'about' }"
-                    :exact="true"
-                    variant="text"
-                    class="nav-about"
-                    :ripple="false"
-                    @click.stop=""
-                  >
-                    <v-list-item-title :class="`menu-item`">
-                      {{ $gettext(`About`) }}
-                    </v-list-item-title>
-                  </v-list-item>
-                </v-list-group>
-              </div>
             </template>
 
             <v-list-item v-show="!auth" :to="{ name: 'login' }" variant="text" class="nav-login" @click.stop="">
@@ -768,26 +492,6 @@
             >
               <v-icon v-if="isPro" class="ma-auto">mdi-check-decagram</v-icon>
               <v-icon v-else class="ma-auto">mdi-diamond</v-icon>
-            </v-list-item>
-            <v-list-item
-              v-if="!isMini && featMembership"
-              :to="{ name: 'upgrade' }"
-              variant="text"
-              class="nav-upgrade"
-              @click.stop=""
-            >
-              <v-list-item-title v-if="isPro" class="nav-menu-item">
-                <v-icon>mdi-check-decagram</v-icon>
-                <p class="nav-item-title">
-                  {{ $gettext(`Upgrade`) }}
-                </p>
-              </v-list-item-title>
-              <v-list-item-title v-else class="nav-menu-item">
-                <v-icon>mdi-diamond</v-icon>
-                <p class="nav-item-title">
-                  {{ $gettext(`Support Our Mission`) }}
-                </p>
-              </v-list-item-title>
             </v-list-item>
           </v-list>
 
@@ -839,6 +543,18 @@
               </v-btn>
             </div>
           </div>
+          <div v-show="isPublic && !disconnected" class="nav-info user-info">
+            <div class="nav-info__underlay"></div>
+            <div class="text-start mt-1 flex-grow-1 clickable" @click.stop="showAccountSettings">
+              <p class="text-body-2">Settings</p>
+              <p class="text-caption opacity-70"></p>
+            </div>
+            <div class="text-center">
+              <v-btn icon variant="text" :elevation="0" @click.stop.prevent="showAccountSettings">
+                <v-icon>mdi-cog</v-icon>
+              </v-btn>
+            </div>
+          </div>
         </div>
       </v-navigation-drawer>
       <div v-if="config.legalInfo" id="legal-info">
@@ -848,129 +564,49 @@
         <span v-else>{{ config.legalInfo }}</span>
       </div>
     </template>
+
     <div id="mobile-menu" :class="{ active: speedDial }" @click.stop="speedDial = false">
       <div class="menu-content grow-top-end">
         <div class="menu-icons">
-          <a
-            v-if="auth && !isPublic"
-            href="#"
-            :title="$gettext('Logout')"
-            class="menu-action navigation-logout"
-            @click.prevent="onLogout"
-          >
-            <v-icon>mdi-power</v-icon>
-          </a>
-          <a href="#" :title="$gettext('Reload')" class="menu-action nav-reload" @click.prevent="reloadApp">
-            <v-icon>mdi-refresh</v-icon>
-          </a>
-          <router-link
-            v-if="auth && $config.feature('account')"
-            :to="{ name: 'settings_account' }"
-            :title="$gettext('Account')"
-            class="menu-action nav-account"
-          >
-            <v-icon>mdi-shield-account-variant</v-icon>
-          </router-link>
-          <router-link
-            v-if="auth && $config.feature('settings') && !routeName('settings')"
-            :to="{ name: 'settings' }"
-            :title="$gettext('Settings')"
-            class="menu-action nav-settings"
-          >
-            <v-icon>mdi-cog</v-icon>
-          </router-link>
-          <a
-            v-if="auth && !config.readonly && $config.feature('upload')"
-            href="#"
-            :title="$gettext('Upload')"
-            class="menu-action nav-upload"
-            @click.prevent="openUpload()"
-          >
-            <v-icon>mdi-cloud-upload</v-icon>
-          </a>
-          <router-link
-            v-if="!auth && !isPublic"
-            :to="{ name: 'login' }"
-            :title="$gettext('Login')"
-            class="menu-action nav-login"
-          >
-            <v-icon>mdi-login</v-icon>
-          </router-link>
+          <slot name="menu-icon">
+            <a href="#" :title="$gettext('Reload')" class="menu-action nav-reload" @click.prevent="reloadApp">
+              <v-icon>mdi-refresh</v-icon>
+            </a>
+            <router-link
+              v-if="auth && $config.feature('settings') && !routeName('settings')"
+              :to="{ name: 'settings' }"
+              :title="$gettext('Settings')"
+              class="menu-action nav-settings"
+            >
+              <v-icon>mdi-cog</v-icon>
+            </router-link>
+            <a
+              v-if="auth && !config.readonly && $config.feature('upload')"
+              href="#"
+              :title="$gettext('Upload')"
+              class="menu-action nav-upload"
+              @click.prevent="openUpload()"
+            >
+              <v-icon>mdi-cloud-upload</v-icon>
+            </a>
+            <router-link
+              v-if="!auth && !isPublic"
+              :to="{ name: 'login' }"
+              :title="$gettext('Login')"
+              class="menu-action nav-login"
+            >
+              <v-icon>mdi-login</v-icon>
+            </router-link>
+          </slot>
         </div>
         <div class="menu-actions">
-          <div v-if="auth && !routeName('browse') && $config.feature('search')" class="menu-action nav-search">
-            <router-link to="/browse">
-              <v-icon>mdi-magnify</v-icon>
-              {{ $gettext(`Search`) }}
-            </router-link>
-          </div>
-          <div v-if="auth && !routeName('albums') && $config.feature('albums')" class="menu-action nav-albums">
-            <router-link to="/albums">
-              <v-icon>mdi-bookmark</v-icon>
-              {{ $gettext(`Albums`) }}
-            </router-link>
-          </div>
-          <div
-            v-if="auth && canManagePeople && !routeName('people') && $config.feature('people')"
-            class="menu-action nav-people"
-          >
-            <router-link to="/people">
-              <v-icon>mdi-account</v-icon>
-              {{ $gettext(`People`) }}
-            </router-link>
-          </div>
-          <div
-            v-if="auth && canSearchPlaces && !routeName('places') && $config.feature('places')"
-            class="menu-action nav-places"
-          >
-            <router-link to="/places">
-              <v-icon>mdi-map-marker</v-icon>
-              {{ $gettext(`Places`) }}
-            </router-link>
-          </div>
-          <div
-            v-if="auth && !routeName('files') && $config.feature('files') && $config.feature('library')"
-            class="menu-action nav-files"
-          >
-            <router-link to="/index/files">
-              <v-icon>mdi-folder</v-icon>
-              {{ $gettext(`Files`) }}
-            </router-link>
-          </div>
-          <div v-if="auth && !routeName('library_index') && $config.feature('library')" class="menu-action nav-index">
-            <router-link :to="{ name: 'library_index' }">
-              <v-icon>mdi-film</v-icon>
-              {{ $gettext(`Index`) }}
-            </router-link>
-          </div>
-          <div
-            v-if="auth && !routeName('index') && $config.feature('library') && $config.feature('logs')"
-            class="menu-action nav-logs"
-          >
-            <router-link :to="{ name: 'library_logs' }">
-              <v-icon>mdi-file-document</v-icon>
-              {{ $gettext(`Logs`) }}
-            </router-link>
-          </div>
-          <div class="menu-action nav-manual">
-            <a :href="links.docs" target="_blank">
-              <v-icon>mdi-book-open-page-variant</v-icon>
-              {{ $gettext(`User Guide`) }}
-            </a>
-          </div>
-          <div v-if="featUpgrade" class="menu-action nav-upgrade">
-            <router-link :to="{ name: 'upgrade' }">
-              <v-icon v-if="isPro">mdi-check-decagram</v-icon>
-              <v-icon v-else>mdi-diamond</v-icon>
-              {{ $gettext(`Upgrade`) }}
-            </router-link>
-          </div>
-          <div v-if="config.legalUrl" class="menu-action nav-legal">
-            <a :href="config.legalUrl" target="_blank">
-              <v-icon>mdi-information</v-icon>
-              {{ $gettext(`Legal Information`) }}
-            </a>
-          </div>
+
+            <div v-if="auth && !routeName('browse') && $config.feature('search')" class="menu-action nav-search">
+              <router-link to="/browse">
+                <v-icon>mdi-view-comfy</v-icon>
+                {{ $gettext(`Browse`) }}
+              </router-link>
+            </div>
         </div>
       </div>
     </div>

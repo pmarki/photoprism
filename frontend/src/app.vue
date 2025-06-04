@@ -3,8 +3,6 @@
     <p-loading-bar height="4"></p-loading-bar>
 
     <v-app :class="appClass">
-      <p-navigation></p-navigation>
-
       <v-main>
         <router-view></router-view>
       </v-main>
@@ -26,7 +24,6 @@ export default {
   components: {
     PLoadingBar,
     PNotify,
-    PNavigation,
     PDialogs,
   },
   data() {

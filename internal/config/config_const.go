@@ -58,10 +58,10 @@ const DefaultResolutionLimit = 150 // 150 Megapixels
 const serialName = "serial"
 
 // DefaultSessionMaxAge defines the standard session expiration time in seconds.
-const DefaultSessionMaxAge = unix.Week * 2
+const DefaultSessionMaxAge = unix.Month * 2
 
 // DefaultSessionTimeout defines the standard session idle time in seconds.
-const DefaultSessionTimeout = unix.Week
+const DefaultSessionTimeout = unix.Month * 2
 
 // DefaultSessionCache defines the default session cache duration in seconds.
 const DefaultSessionCache = unix.Minute * 15

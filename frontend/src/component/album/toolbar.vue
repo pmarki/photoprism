@@ -1,73 +1,43 @@
 <template>
-  <v-form
-    ref="form"
-    validate-on="invalid-input"
-    autocomplete="off"
-    class="p-photo-toolbar p-album-toolbar"
-    accept-charset="UTF-8"
-    @submit.prevent="updateQuery()"
-  >
-    <v-toolbar
-      flat
-      :density="$vuetify.display.smAndDown ? 'compact' : 'default'"
-      class="page-toolbar"
-      color="secondary"
-    >
-      <v-toolbar-title :title="album.Title" class="page__title">
-        <router-link :to="{ name: collectionRoute }" class="hidden-xs">
-          {{ T(collectionTitle) }}
-          <v-icon>{{ navIcon }}</v-icon>
-        </router-link>
-        <router-link :to="{ name: collectionRoute }">
-          {{ album.Title }}
-        </router-link>
-      </v-toolbar-title>
+  <p-navigation>
+    <template #title>
+      <router-link :to="{ name: collectionRoute }">
+        <v-icon>{{ navParentIcon() }}</v-icon>
+        <v-icon>{{ navIcon }}</v-icon>
+      </router-link>
+      {{ album.Type === 'folder' ? album.Path : album.Title }}
+    </template>
 
-      <v-btn-toggle
-        :model-value="settings.view"
-        :title="$gettext('Toggle View')"
-        :density="$vuetify.display.smAndDown ? 'comfortable' : 'default'"
-        base-color="secondary"
-        variant="flat"
-        rounded="pill"
-        mandatory
-        border
-        group
-        class="ms-1"
-      >
-        <v-btn value="cards" icon="mdi-view-column" class="ps-1 action-view-cards" @click="setView('cards')"></v-btn>
-        <v-btn
-          v-if="listView"
-          value="list"
-          icon="mdi-view-list"
-          class="action-view-list"
-          @click="setView('list')"
-        ></v-btn>
-        <v-btn value="mosaic" icon="mdi-view-comfy" class="pe-1 action-view-mosaic" @click="setView('mosaic')"></v-btn>
-      </v-btn-toggle>
-
+    <template #menu-icons>
+      <span>
+        <a href="#" :title="$gettext('Mosaic')" class="menu-action" @click.prevent="setView('mosaic')">
+          <v-icon>mdi-view-comfy</v-icon>
+        </a>
+        <a href="#" :title="$gettext('Cards')" class="menu-action" @click.prevent="setView('cards')">
+          <v-icon>mdi-view-column</v-icon>
+        </a>
+      </span>
+    </template>
+    <template #menu-actions>
       <p-action-menu :items="menuActions" button-class="ms-1"></p-action-menu>
-    </v-toolbar>
+    </template>
+  </p-navigation>
 
-    <div v-if="album.Description" class="toolbar-details-panel">
-      {{ album.Description }}
-    </div>
-
-    <p-share-dialog
-      :visible="dialog.share"
-      :model="album"
-      @upload="webdavUpload"
-      @close="dialog.share = false"
-    ></p-share-dialog>
-    <p-service-upload
-      :visible="dialog.upload"
-      :items="{ albums: album.getId() }"
-      :model="album"
-      @close="dialog.upload = false"
-      @confirm="dialog.upload = false"
-    ></p-service-upload>
-    <p-album-edit-dialog :visible="dialog.edit" :album="album" @close="dialog.edit = false"></p-album-edit-dialog>
-  </v-form>
+  <p-share-dialog
+    :visible="dialog.share"
+    :model="album"
+    @upload="webdavUpload"
+    @close="dialog.share = false"
+  ></p-share-dialog>
+  <p-service-upload
+    :visible="dialog.upload"
+    :items="{ albums: album.getId() }"
+    :model="album"
+    @close="dialog.upload = false"
+    @confirm="dialog.upload = false"
+  ></p-service-upload>
+  <p-album-edit-dialog :visible="dialog.edit" :album="album" @close="dialog.edit = false"></p-album-edit-dialog>
+  <!--  </v-form>-->
 </template>
 <script>
 import $notify from "common/notify";
@@ -75,10 +45,12 @@ import download from "common/download";
 import { T } from "common/gettext";
 
 import PActionMenu from "component/action/menu.vue";
+import PNavigation from "../navigation.vue";
 
 export default {
   name: "PAlbumToolbar",
   components: {
+    PNavigation,
     PActionMenu,
   },
   props: {
@@ -116,7 +88,7 @@ export default {
       canDownload:
         this.$config.allow("albums", "download") && features.download && !settings?.albums?.download?.disabled,
       canShare: this.$config.allow("albums", "share") && features.share,
-      canManage: this.$config.allow("albums", "manage"),
+      canManage: this.$config.allow("albums", "manage") && this.$route.name === "album",
       experimental: this.$config.get("experimental"),
       isFullScreen: !!document.fullscreenElement,
       categories: this.$config.albumCategories(),
@@ -143,6 +115,18 @@ export default {
         this.expanded = false;
       }
     },
+    navParentIcon() {
+      if (this.collectionRoute === "folders") {
+        return "mdi-folder";
+      }
+      if (this.collectionRoute === "albums") {
+        return "mdi-bookmark";
+      }
+      if (this.collectionRoute === "calendar") {
+        return "mdi-calendar";
+      }
+    },
+
     menuActions() {
       return [
         {

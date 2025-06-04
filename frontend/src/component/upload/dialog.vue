@@ -39,49 +39,28 @@
               <span v-else-if="total > 0 && completedTotal < 100">
                 {{ $gettext(`Uploading %{n} of %{t}…`, { n: current, t: total }) }}
               </span>
-              <span v-else-if="indexing">{{ $gettext(`Upload complete. Indexing…`) }}</span>
+              <span v-else-if="indexing">{{ $gettext(`Upload completed. Indexing…`) }}</span>
               <span v-else-if="completedTotal === 100">{{ $gettext(`Done.`) }}</span>
               <span v-else-if="filesQuotaReached"
                 >{{ $gettext(`Insufficient storage.`) }}
                 {{ $gettext(`Increase storage size or delete files to continue.`) }}</span
               >
-              <span v-else>{{ $gettext(`Select the files to upload…`) }}</span>
+              <span v-else>{{ $gettext(`Upload files to selected folder`) }}</span>
             </div>
             <div class="form-body">
               <div class="form-controls">
-                <v-combobox
-                  v-model="selectedAlbums"
+                <v-select
+                  v-model="selectedAlbum"
                   :disabled="busy || loading || total > 0 || filesQuotaReached"
                   hide-details
-                  chips
-                  closable-chips
-                  multiple
                   class="input-albums"
+                  density="comfortable"
                   :items="albums"
-                  item-title="Title"
+                  item-title="Path"
                   item-value="UID"
-                  :placeholder="$gettext('Select or create an album')"
                   return-object
                 >
-                  <template #no-data>
-                    <v-list-item>
-                      <v-list-item-title>
-                        {{ $gettext(`Press enter to create a new album.`) }}
-                      </v-list-item-title>
-                    </v-list-item>
-                  </template>
-                  <template #chip="chip">
-                    <v-chip
-                      :model-value="chip.selected"
-                      :disabled="chip.disabled"
-                      prepend-icon="mdi-bookmark"
-                      class="text-truncate"
-                      @click:close="removeSelection(chip.index)"
-                    >
-                      {{ chip.item.title ? chip.item.title : chip.item }}
-                    </v-chip>
-                  </template>
-                </v-combobox>
+                </v-select>
                 <v-progress-linear
                   :model-value="completedTotal"
                   :indeterminate="indexing"
@@ -91,23 +70,6 @@
                 >
                   <span v-if="eta" class="eta text-caption opacity-80">{{ eta }}</span>
                 </v-progress-linear>
-              </div>
-              <div class="form-text">
-                <p v-if="isDemo">
-                  {{ $gettext(`You can upload up to %{n} files for test purposes.`, { n: fileLimit }) }}
-                  {{ $gettext(`Please do not upload any private, unlawful or offensive pictures. `) }}
-                </p>
-                <p v-else-if="rejectNSFW">
-                  {{ $gettext(`Please don't upload photos containing offensive content.`) }}
-                  {{ $gettext(`Uploads that may contain such images will be rejected automatically.`) }}
-                </p>
-                <p v-if="featReview">
-                  {{
-                    $gettext(
-                      `Non-photographic and low-quality images require a review before they appear in search results.`
-                    )
-                  }}
-                </p>
               </div>
             </div>
           </div>
@@ -154,7 +116,7 @@ export default {
     return {
       accept: this.$config.get("uploadAllow"),
       albums: [],
-      selectedAlbums: [],
+      selectedAlbum: null,
       selected: [],
       uploads: [],
       busy: false,
@@ -193,13 +155,6 @@ export default {
         this.rejectNSFW = !this.$config.get("uploadNSFW");
         this.featReview = this.$config.feature("review");
 
-        // Set currently selected albums.
-        if (this.data && Array.isArray(this.data.albums)) {
-          this.selectedAlbums = this.data.albums;
-        } else {
-          this.selectedAlbums = [];
-        }
-
         // Fetch albums from backend.
         this.load("");
       } else {
@@ -228,9 +183,6 @@ export default {
         }
       }
     },
-    removeSelection(index) {
-      this.selectedAlbums.splice(index, 1);
-    },
     onLoad() {
       this.loading = true;
     },
@@ -243,17 +195,23 @@ export default {
       }
 
       this.onLoad();
-
       const params = {
         q: q,
         count: 2000,
         offset: 0,
-        type: "album",
+        type: "folder",
+        order: "name",
       };
 
       Album.search(params)
         .then((response) => {
           this.albums = response.models;
+          console.log('album ' +  this.$route.params.album);
+          this.albums.forEach((item) => {
+            if (item.UID === this.$route.params.album) {
+              this.selectedAlbum = item;
+            }
+          });
         })
         .finally(() => {
           this.onLoaded();
@@ -386,15 +344,9 @@ export default {
       $notify.info(this.$gettext("Uploading photos…"));
 
       let addToAlbums = [];
-
-      if (this.selectedAlbums && this.selectedAlbums.length > 0) {
-        this.selectedAlbums.forEach((a) => {
-          if (typeof a === "string") {
-            addToAlbums.push(a);
-          } else if (a instanceof Album && a.UID) {
-            addToAlbums.push(a.UID);
-          }
-        });
+      let folder = '';
+      if (this.selectedAlbum) {
+        folder = this.selectedAlbum.UID;
       }
 
       async function performUpload(ctx) {
@@ -437,10 +389,11 @@ export default {
         $api
           .put(`users/${userUid}/upload/${ctx.token}`, {
             albums: addToAlbums,
+            folder: folder,
           })
           .then(() => {
             ctx.reset();
-            $notify.success(ctx.$gettext("Upload complete"));
+            $notify.success(ctx.$gettext("Upload completed"));
             ctx.$emit("confirm");
           })
           .catch(() => {

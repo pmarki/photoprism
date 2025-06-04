@@ -647,3 +647,7 @@
     -webkit-box-shadow: none;
     box-shadow: none;
 }
+
+.pswp__button--share-button {
+    color: var(--pswp-icon-color);
+}

@@ -1,0 +1,623 @@
+diff --git a/frontend/src/common/api.js b/frontend/src/common/api.js
+index aa4ac7c01ec..6019ea29ac5 100644
+--- a/frontend/src/common/api.js
++++ b/frontend/src/common/api.js
+@@ -70,7 +70,7 @@ Api.interceptors.response.use(
+   function (resp) {
+     Notify.ajaxEnd();
+ 
+-    if (typeof resp.data == "string") {
++    if (typeof resp.data == "string" && resp.request.responseType !== "blob") {
+       Notify.error($gettext("Request failed - invalid response"));
+       console.warn("WARNING: Server returned HTML instead of JSON - API not implemented?");
+     }
+diff --git a/frontend/src/common/caniuse.js b/frontend/src/common/caniuse.js
+index ce6d7d78c70..ad3316cbd6f 100644
+--- a/frontend/src/common/caniuse.js
++++ b/frontend/src/common/caniuse.js
+@@ -45,3 +45,6 @@ export const canUseWebM = canUseVideo // Google WebM
+ export const canUseHevc = canUseVideo // HVC, Basic Support
+   ? !!document.createElement("video").canPlayType('video/mp4; codecs="hvc1.1.6.L93.90"')
+   : false;
++
++export const canUseWebshareApi =
++  navigator.canShare && navigator.canShare({ files: [new File([], "emtpy.jpg")] });
+diff --git a/frontend/src/common/util.js b/frontend/src/common/util.js
+index fc5c02fc4c2..8e78c7a5e5e 100644
+--- a/frontend/src/common/util.js
++++ b/frontend/src/common/util.js
+@@ -23,6 +23,13 @@ Additional information can be found in our Developer Guide:
+ 
+ */
+ 
++import {
++  MediaVideo,
++  VideoWebshareExtension,
++  VideoWebshareMimeType,
++  TranscodeVideoForWebshare,
++} from "../model/photo";
++
+ const Nanosecond = 1;
+ const Microsecond = 1000 * Nanosecond;
+ const Millisecond = 1000 * Microsecond;
+@@ -422,6 +429,28 @@ export default class Util {
+     }
+   }
+ 
++  static JSFileFromPhoto(blob, photo) {
++    return new File([blob], photo.Name.replaceAll("/", "-"), {
++      type: photo.Mime,
++      lastModified: photo.ModTime,
++    });
++  }
++
++  static JSFileForWebshare(blob, photo) {
++    if (TranscodeVideoForWebshare && photo.MediaType == MediaVideo) {
++      return new File(
++        [blob],
++        photo.Name.replaceAll("/", "-").replace(/\.[^/.]+$/, "") + VideoWebshareExtension,
++        {
++          type: VideoWebshareMimeType,
++          lastModified: photo.ModTime,
++        }
++      );
++    } else {
++      return this.JSFileFromPhoto(blob, photo);
++    }
++  }
++
+   static async copyToMachineClipboard(text) {
+     if (window.navigator.clipboard) {
+       await window.navigator.clipboard.writeText(text);
+diff --git a/frontend/src/component/photo-viewer.vue b/frontend/src/component/photo-viewer.vue
+index 2ad5eea8d06..c5ca5da5117 100644
+--- a/frontend/src/component/photo-viewer.vue
++++ b/frontend/src/component/photo-viewer.vue
+@@ -1,5 +1,11 @@
+ <template>
+-  <div id="photo-viewer" class="p-viewer pswp" tabindex="-1" role="dialog" aria-hidden="true">
++  <div
++    id="photo-viewer"
++    class="p-viewer pswp"
++    tabindex="-1"
++    role="dialog"
++    aria-hidden="true"
++  >
+     <div class="pswp__bg"></div>
+     <div class="pswp__scroll-wrap">
+       <div class="pswp__container" :class="{ slideshow: slideshow.active }">
+@@ -10,7 +16,9 @@
+ 
+       <div class="pswp__ui pswp__ui--hidden">
+         <div class="pswp__top-bar">
+-          <div class="pswp__taken hidden-xs-only">{{ formatDate(item.TakenAtLocal) }}</div>
++          <div class="pswp__taken hidden-xs-only">
++            {{ formatDate(item.TakenAtLocal) }}
++          </div>
+ 
+           <div class="pswp__counter"></div>
+ 
+@@ -20,7 +28,7 @@
+           ></button>
+ 
+           <button
+-            v-if="canDownload"
++            v-if="canDownload && !navigatorCanShare"
+             class="pswp__button action-download"
+             style="background: none"
+             :title="$gettext('Download')"
+@@ -29,6 +37,16 @@
+             <v-icon size="16" color="white">get_app</v-icon>
+           </button>
+ 
++          <button
++            v-if="canDownload && navigatorCanShare"
++            class="pswp__button action-webshare hide-mini"
++            style="background: none"
++            :title="$gettext('Share')"
++            @click.exact="onWebshare"
++          >
++            <v-icon size="16" color="white">share</v-icon>
++          </button>
++
+           <button
+             v-if="canEdit"
+             class="pswp__button action-edit hidden-shared-only"
+@@ -45,7 +63,10 @@
+             :title="$gettext('Select')"
+             @click.exact="onSelect"
+           >
+-            <v-icon v-if="selection.length && $clipboard.has(item)" size="16" color="white"
++            <v-icon
++              v-if="selection.length && $clipboard.has(item)"
++              size="16"
++              color="white"
+               >check_circle</v-icon
+             >
+             <v-icon v-else size="16" color="white">radio_button_off</v-icon>
+@@ -58,7 +79,9 @@
+             :title="$gettext('Like')"
+             @click.exact="onLike"
+           >
+-            <v-icon v-if="item.Favorite" size="16" color="white">favorite</v-icon>
++            <v-icon v-if="item.Favorite" size="16" color="white"
++              >favorite</v-icon
++            >
+             <v-icon v-else size="16" color="white">favorite_border</v-icon>
+           </button>
+ 
+@@ -78,7 +101,9 @@
+             :title="$gettext('Start/Stop Slideshow')"
+             @click.exact="onSlideshow"
+           >
+-            <v-icon v-show="!interval" size="18" color="white">play_arrow</v-icon>
++            <v-icon v-show="!interval" size="18" color="white"
++              >play_arrow</v-icon
++            >
+             <v-icon v-show="interval" size="16" color="white">pause</v-icon>
+           </button>
+ 
+@@ -91,21 +116,21 @@
+           </div>
+         </div>
+ 
+-        <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
++        <div
++          class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"
++        >
+           <div class="pswp__share-tooltip"></div>
+         </div>
+ 
+         <button
+           class="pswp__button pswp__button--arrow--left action-previous"
+           title="Previous (arrow left)"
+-        >
+-        </button>
++        ></button>
+ 
+         <button
+           class="pswp__button pswp__button--arrow--right action-next"
+           title="Next (arrow right)"
+-        >
+-        </button>
++        ></button>
+ 
+         <div class="pswp__caption" @click="onPlay">
+           <div class="pswp__caption__center"></div>
+@@ -130,6 +155,13 @@
+       >
+       </p-video-player>
+     </div>
++    <p-webshare-dialog
++      :show="webshare"
++      :items="{ photos: [item.UID] }"
++      @completed="webshare = false"
++      @failed="onWebshareFailed"
++    >
++    </p-webshare-dialog>
+   </div>
+ </template>
+ 
+@@ -141,19 +173,27 @@ import Thumb from "model/thumb";
+ import { Photo, DATE_FULL } from "model/photo";
+ import Notify from "common/notify";
+ import { DateTime } from "luxon";
++import { canUseWebshareApi } from "common/caniuse";
+ 
+ export default {
+   name: "PPhotoViewer",
+   data() {
+     return {
+-      canEdit: this.$config.allow("photos", "update") && this.$config.feature("edit"),
+-      canLike: this.$config.allow("photos", "manage") && this.$config.feature("favorites"),
+-      canDownload: this.$config.allow("photos", "download") && this.$config.feature("download"),
++      canEdit:
++        this.$config.allow("photos", "update") && this.$config.feature("edit"),
++      canLike:
++        this.$config.allow("photos", "manage") &&
++        this.$config.feature("favorites"),
++      canDownload:
++        this.$config.allow("photos", "download") &&
++        this.$config.feature("download"),
++      navigatorCanShare: canUseWebshareApi && this.$isMobile,
+       selection: this.$clipboard.selection,
+       config: this.$config.values,
+       item: new Thumb(),
+       subscriptions: [],
+       interval: false,
++      webshare: false,
+       slideshow: {
+         active: false,
+         next: 0,
+@@ -170,10 +210,22 @@ export default {
+     };
+   },
+   created() {
+-    this.subscriptions["viewer.change"] = Event.subscribe("viewer.change", this.onChange);
+-    this.subscriptions["viewer.pause"] = Event.subscribe("viewer.pause", this.onPause);
+-    this.subscriptions["viewer.show"] = Event.subscribe("viewer.show", this.onShow);
+-    this.subscriptions["viewer.hide"] = Event.subscribe("viewer.hide", this.onHide);
++    this.subscriptions["viewer.change"] = Event.subscribe(
++      "viewer.change",
++      this.onChange
++    );
++    this.subscriptions["viewer.pause"] = Event.subscribe(
++      "viewer.pause",
++      this.onPause
++    );
++    this.subscriptions["viewer.show"] = Event.subscribe(
++      "viewer.show",
++      this.onShow
++    );
++    this.subscriptions["viewer.hide"] = Event.subscribe(
++      "viewer.hide",
++      this.onHide
++    );
+   },
+   destroyed() {
+     this.onPause();
+@@ -298,6 +350,25 @@ export default {
+ 
+       new Photo().find(this.item.UID).then((p) => p.downloadAll());
+     },
++    onWebshareCompleted(ev, data) {
++      // this.busy = false;
++    },
++    onWebshareFailed() {
++      this.navigatorCanShare = false;
++      this.$notify.error(
++        this.$gettext("sharing photos failed - showing download icon")
++      );
++    },
++    onWebshare() {
++      this.onPause();
++
++      if (!this.item || !this.item.DownloadUrl) {
++        console.warn("photo viewer: no download url");
++        return;
++      }
++
++      this.webshare = true;
++    },
+     onEdit() {
+       this.onPause();
+ 
+diff --git a/frontend/src/component/photo/clipboard.vue b/frontend/src/component/photo/clipboard.vue
+index 287b56188d4..5c6006f90c4 100644
+--- a/frontend/src/component/photo/clipboard.vue
++++ b/frontend/src/component/photo/clipboard.vue
+@@ -68,7 +68,7 @@
+           <v-icon>lock</v-icon>
+         </v-btn>
+         <v-btn
+-            v-if="canDownload && context !== 'archive'" fab dark
++            v-if="canDownload && !navigatorCanShare && context !== 'archive'" fab dark
+             small
+             :title="$gettext('Download')"
+             :disabled="busy"
+@@ -78,6 +78,17 @@
+         >
+           <v-icon>get_app</v-icon>
+         </v-btn>
++        <v-btn
++            v-if="canDownload && navigatorCanShare && context !== 'archive'" fab dark
++            small
++            :title="$gettext('Share')"
++            color="download"
++            :disabled="busy"
++            class="action-webshare"
++            @click.stop="webShare()"
++        >
++          <v-icon>share</v-icon>
++        </v-btn>
+         <v-btn
+             v-if="canEditAlbum && context !== 'archive'" fab dark
+             small
+@@ -151,6 +162,10 @@
+                           @confirm="addToAlbum"></p-photo-album-dialog>
+     <p-share-upload-dialog :show="dialog.share" :items="{photos: selection}" :model="album" @cancel="dialog.share = false"
+                            @confirm="onShared"></p-share-upload-dialog>
++    <p-webshare-dialog :show="dialog.webshare" :items="{photos: selection}" 
++                       @completed="busy = false; dialog.webshare = false;" 
++                       @failed="onWebshareFailed">
++                      </p-webshare-dialog>
+   </div>
+ </template>
+ <script>
+@@ -159,6 +174,7 @@ import Notify from "common/notify";
+ import Event from "pubsub-js";
+ import download from "common/download";
+ import Photo from "model/photo";
++import {canUseWebshareApi} from "common/caniuse";
+ 
+ export default {
+   name: 'PPhotoClipboard',
+@@ -201,10 +217,17 @@ export default {
+         delete: false,
+         album: false,
+         share: false,
++        webshare: false,
+       },
+       rtl: this.$rtl,
+     };
+   },
++  computed: {
++    navigatorCanShare: function () {
++      // Chrome has a limit on 10 items
++      return canUseWebshareApi && this.$isMobile && this.selection.length <= 10;
++    }
++  },
+   methods: {
+     clearClipboard() {
+       this.$clipboard.clear();
+@@ -370,6 +393,19 @@ export default {
+     onDownload(path) {
+       download(path, "photos.zip");
+     },
++    onWebshareFailed() {
++      this.busy = false;
++      this.navigatorCanShare = false;
++      this.$notify.error(this.$gettext('sharing photos failed - showing download icon'));
++    },
++    webShare() {
++      if (this.busy || this.selection.length == 0) {
++        return;
++      }
++      this.busy = true;
++      this.dialog.webshare = true;
++      this.expanded = false;
++    },
+     edit() {
+       // Open Edit Dialog
+       Event.PubSub.publish("dialog.edit", {selection: this.selection, album: this.album, index: 0});
+diff --git a/frontend/src/dialog/dialogs.js b/frontend/src/dialog/dialogs.js
+index 0e8f206f88c..374ed053de9 100644
+--- a/frontend/src/dialog/dialogs.js
++++ b/frontend/src/dialog/dialogs.js
+@@ -38,6 +38,7 @@ import PPeopleMergeDialog from "dialog/people/merge.vue";
+ import PUploadDialog from "dialog/upload.vue";
+ import PVideoViewer from "dialog/video/viewer.vue";
+ import PShareDialog from "dialog/share.vue";
++import PWebshareDialog from "dialog/share/webshare.vue";
+ import PShareUploadDialog from "dialog/share/upload.vue";
+ import PWebdavDialog from "dialog/webdav.vue";
+ import PReloadDialog from "dialog/reload.vue";
+@@ -63,6 +64,7 @@ dialogs.install = (Vue) => {
+   Vue.component("PUploadDialog", PUploadDialog);
+   Vue.component("PVideoViewer", PVideoViewer);
+   Vue.component("PShareDialog", PShareDialog);
++  Vue.component("PWebshareDialog", PWebshareDialog);
+   Vue.component("PShareUploadDialog", PShareUploadDialog);
+   Vue.component("PWebdavDialog", PWebdavDialog);
+   Vue.component("PReloadDialog", PReloadDialog);
+diff --git a/frontend/src/dialog/share/webshare.vue b/frontend/src/dialog/share/webshare.vue
+new file mode 100644
+index 00000000000..75e7b5371c2
+--- /dev/null
++++ b/frontend/src/dialog/share/webshare.vue
+@@ -0,0 +1,149 @@
++<template>
++  <v-dialog
++    :value="showConfirmationDialog"
++    lazy
++    persistent
++    max-width="350"
++    class="p-confirm-dialog"
++    @keydown.esc="cancel"
++  >
++    <v-card raised elevation="24">
++      <v-container fluid class="pb-2 pr-2 pl-2">
++        <v-layout row wrap>
++          <v-flex xs3 text-xs-center>
++            <v-icon size="54" color="secondary-dark lighten-1">{{
++              icon
++            }}</v-icon>
++          </v-flex>
++          <v-flex xs9 text-xs-left align-self-center>
++            <div class="subheading pr-1">
++              <translate>Download complete. Ready for sharing?</translate>
++            </div>
++          </v-flex>
++          <v-flex xs12 text-xs-right class="pt-3">
++            <v-btn
++              depressed
++              color="secondary-light"
++              class="action-cancel compact"
++              @click.stop="cancel"
++            >
++              <translate key="Cancel">Cancel</translate>
++            </v-btn>
++            <v-btn
++              color="primary-button"
++              depressed
++              dark
++              class="action-confirm compact"
++              @click.stop="webShareDialogInitiated"
++            >
++              <translate key="Share">Share</translate>
++            </v-btn>
++          </v-flex>
++        </v-layout>
++      </v-container>
++    </v-card>
++  </v-dialog>
++</template>
++<script>
++import Photo from "model/photo";
++import Util from "common/util";
++import Notify from "common/notify";
++import Api from "common/api";
++
++export default {
++  name: "PWebshareDialog",
++  props: {
++    show: {
++      type: Boolean,
++      default: false,
++    },
++    items: {
++      type: Object,
++      required: true,
++    },
++    icon: {
++      type: String,
++      default: "share",
++    },
++  },
++  watch: {
++    show: function (val) {
++      if (val) {
++        this.onShow();
++      }
++    },
++  },
++  data() {
++    return {
++      showConfirmationDialog: false,
++      webshareData: [],
++    };
++  },
++  methods: {
++    cancel() {
++      this.showConfirmationDialog = false;
++      this.$emit("cancel");
++    },
++    onShow() {
++      // Resolve selection into Photo objects and download them as blobs
++      const photos = this.items.photos.map((uid) =>
++        new Photo().find(uid).then((p) =>
++          Api.get(p.getWebshareDownloadUrl(), { responseType: "blob" }).then(
++            (resp) => {
++              p.Blob = resp.data;
++              return p;
++            }
++          )
++        )
++      );
++
++      // Wait for all downloads, then open native browser share dialog
++      Promise.all(photos)
++        .then((blobs) => {
++          const filesArray = blobs.map((p) =>
++            Util.JSFileForWebshare(p.Blob, p.getWebshareFile())
++          );
++          const webshareData = {
++            files: filesArray,
++          };
++          this.webshareData = webshareData;
++          return navigator.share(webshareData);
++        })
++        .catch((e) => {
++          if (e.name === "AbortError") {
++            // Cancelled by user
++            this.$emit("cancel");
++          } else if (e.name === "NotAllowedError") {
++            // Sharing requires a transient activation and might fail with a NotAllowedError.
++            // Show dialog to create transient activation and try again.
++            this.showConfirmationDialog = true;
++          } else {
++            this.$emit("failed");
++          }
++        })
++        .finally(() => {
++          if (!this.showConfirmationDialog) {
++            this.webshareData = {};
++          }
++          this.$emit("completed");
++        });
++      Notify.success(this.$gettext("Downloading & Sharing…"));
++    },
++    webShareDialogInitiated() {
++      this.showConfirmationDialog = false;
++      navigator
++        .share(this.webshareData)
++        .catch((e) => {
++          if (e.name === "AbortError") {
++            this.$emit("cancel");
++          } else {
++            this.$emit("failed");
++          }
++        })
++        .finally(() => {
++          this.webshareData = {};
++        });
++    },
++  },
++};
++</script>
+diff --git a/frontend/src/model/photo.js b/frontend/src/model/photo.js
+index 4badc063316..d59931b200c 100644
+--- a/frontend/src/model/photo.js
++++ b/frontend/src/model/photo.js
+@@ -68,6 +68,11 @@ export const MonthUnknown = -1;
+ export const DayUnknown = -1;
+ export const TimeZoneUTC = "UTC";
+ 
++export const VideoWebshareMimeType = "video/mp4";
++export const VideoWebshareExtension = ".mp4";
++export const TranscodeVideoForWebshare = true;
++export const WebshareFormat = "mp4";
++
+ const num = "numeric";
+ const short = "short";
+ const long = "long";
+@@ -700,6 +705,59 @@ export class Photo extends RestModel {
+     return `${config.apiUri}/dl/${this.mainFileHash()}?t=${config.downloadToken}`;
+   }
+ 
++  getWebshareFile() {
++    const { file } = this.getWebshare();
++    return file;
++  }
++
++  getWebshareDownloadUrl() {
++    const { url } = this.getWebshare();
++    return url;
++  }
++
++  getWebshare() {
++    if (!this.Files) {
++      return;
++    }
++    let url = null;
++    let file = null;
++    if (this.Type == MediaLive || this.Type == MediaRaw) {
++      // use jpeg or png (pngs are not converted to jpeg)
++      file = this.Files.find((f) => f.FileType === FormatJpeg || f.FileType === FormatPng);
++    } else if (this.Type == MediaSidecar) {
++      // I am not sure if this could even happen
++      // use first file
++      file = this.Files[0];
++    } else if (this.Type == MediaImage) {
++      // use main file
++      file = this.mainFile();
++    } else if (this.Type == MediaAnimated) {
++      // use gif or jpeg
++      file = this.Files.find((f) => f.FileType === FormatGif);
++      if (!file) {
++        file = this.Files.find((f) => f.FileType === FormatJpeg);
++      }
++    } else if (this.Type == MediaVector) {
++      // if svg, use it, otherwise use jpeg
++      file = this.Files.find((f) => f.FileType === FormatSvg);
++      if (!file) {
++        file = this.Files.find((f) => f.FileType === FormatJpeg);
++      }
++    } else if (this.Type == MediaVideo) {
++      // use mp4
++      file = this.videoFile();
++      url = `videos/${file.Hash}/${config.previewToken}/${WebshareFormat}`;
++    }
++    if (!file) {
++      file = this.mainFile();
++      console.log("No file found! Falling back to main file.");
++    }
++    if (!url) {
++      url = `dl/${file.Hash}?t=${config.downloadToken}`;
++    }
++    return { url, file };
++  }
++
+   downloadAll() {
+     const s = config.settings();
+ 

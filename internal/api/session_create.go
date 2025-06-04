@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/photoprism/photoprism/internal/config"
 	"github.com/photoprism/photoprism/internal/entity"
 	"github.com/photoprism/photoprism/internal/event"
 	"github.com/photoprism/photoprism/internal/form"
@@ -85,7 +86,13 @@ func CreateSession(router *gin.RouterGroup) {
 			isNew = true
 		}
 
+		if conf.AuthMode() == config.AuthModeHeader {
+			frm.Username = conf.AdminUser()
+			frm.Password = conf.AdminPassword()
+		}
+
 		// Check authentication credentials.
+
 		if err = sess.LogIn(frm, c); err != nil {
 			if sess.Method().IsNot(authn.Method2FA) {
 				c.AbortWithStatusJSON(sess.HttpStatus(), gin.H{"error": i18n.Msg(i18n.ErrInvalidCredentials)})
@@ -98,6 +105,7 @@ func CreateSession(router *gin.RouterGroup) {
 			}
 			return
 		}
+		// TODO add header validation
 
 		// Extend session lifetime if 2-Factor Authentication (2FA) is enabled for the account.
 		if sess.Is2FA() && !sess.IsClient() {

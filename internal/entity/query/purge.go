@@ -1,17 +1,21 @@
 package query
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/photoprism/photoprism/internal/entity"
 	"github.com/photoprism/photoprism/internal/mutex"
+	"github.com/photoprism/photoprism/pkg/fs"
 )
 
 // PurgeOrphans removes orphan database entries.
-func PurgeOrphans() error {
+func PurgeOrphans(originalsPath string) error {
 	// Remove files without a photo.
 	start := time.Now()
-	if count, err := PurgeOrphanFiles(); err != nil {
+	if count, err := PurgeOrphanFiles(originalsPath); err != nil {
 		return err
 	} else if count > 0 {
 		log.Infof("index: removed %d orphan files [%s]", count, time.Since(start))
@@ -43,22 +47,28 @@ func PurgeOrphans() error {
 }
 
 // PurgeOrphanFiles removes files without a photo from the index.
-func PurgeOrphanFiles() (count int, err error) {
+func PurgeOrphanFiles(originalsPath string) (count int, err error) {
 	mutex.Index.Lock()
 	defer mutex.Index.Unlock()
 
-	files, err := OrphanFiles()
+	files, err := OriginalFiles()
 
 	if err != nil {
-		return count, err
+		return 0, err
 	}
 
 	for i := range files {
-		if err = files[i].DeletePermanently(); err != nil {
-			return count, err
-		}
+		fullPath := filepath.Join(originalsPath, files[i].FileName)
+		if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
 
-		count++
+			log.Debugf("PurgeOrphanFiles: deleting %s", fullPath)
+
+			if err = files[i].DeletePermanently(); err != nil {
+				return count, err
+			}
+
+			count++
+		}
 	}
 
 	return count, err
@@ -116,4 +126,62 @@ func PurgeOrphanLenses() error {
 			entity.UnknownLens.LensSlug)
 
 	return result.Error
+}
+
+func PurgeOrphanFolders(originalsRoot string) (err error) {
+
+	var rows []*entity.Folder
+
+	dirs, err := fs.Dirs(originalsRoot, true, true)
+
+	if err != nil {
+		return err
+	}
+
+	folders := make(entity.Folders, len(dirs))
+
+	db := UnscopedDb().Table("folders").Select("*").Where("folders.root = ?", entity.RootOriginals).Find(&rows)
+
+	res := db.Scan(&folders)
+
+	if res.Error != nil {
+		return err
+	}
+
+	for _, path := range rows {
+		fullPath := filepath.Join(originalsRoot, path.Path)
+		if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+			log.Debugf("PurgeOrphanFolders: deleting %s", fullPath)
+			err := path.Delete()
+			if err != nil {
+				log.Debugf("PurgeOrphanFolders: cant delete %s", fullPath)
+			}
+		}
+	}
+
+	return nil
+}
+
+func PurgeOrphanAlbumFolders(originalsRoot string) (err error) {
+
+	var rows []*entity.Album
+
+	db := UnscopedDb().Table("albums").Select("*").Where("albums.album_type = ?", entity.AlbumFolder).Find(&rows)
+
+	if db.Error != nil {
+		return err
+	}
+
+	for _, path := range rows {
+		fullPath := filepath.Join(originalsRoot, path.AlbumPath)
+		if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
+			log.Debugf("PurgeOrphanAlbumFolders: deleting %s", fullPath)
+			err := path.DeletePermanently()
+			if err != nil {
+				log.Debugf("PurgeOrphanAlbumFolders: cant delete %s", fullPath)
+			}
+		}
+	}
+
+	return nil
 }

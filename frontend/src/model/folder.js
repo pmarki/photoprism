@@ -136,6 +136,15 @@ export class Folder extends RestModel {
     return this.search(RootOriginals + path, params);
   }
 
+  static createNew(path) {
+    const url = `/folder/create`;
+    const data = { Path: path };
+
+    $api.put(url, data).catch((err) => {
+      console.error(err);
+    });
+  }
+
   static search(path, params) {
     const options = {
       params: params,

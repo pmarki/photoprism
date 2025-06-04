@@ -59,12 +59,6 @@ func registerStaticRoutes(router *gin.Engine, conf *config.Config) {
 		}
 	}
 
-	// Rainbow Page.
-	router.GET(conf.BaseUri("/_rainbow"), func(c *gin.Context) {
-		clientConfig := conf.ClientPublic()
-		c.HTML(http.StatusOK, "rainbow.gohtml", gin.H{"config": clientConfig})
-	})
-
 	// Splash Screen.
 	router.GET(conf.BaseUri("/_splash"), func(c *gin.Context) {
 		clientConfig := conf.ClientPublic()

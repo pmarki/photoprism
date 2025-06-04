@@ -100,7 +100,7 @@ func (w *CleanUp) Start(opt CleanUpOptions) (thumbs int, orphans int, sidecars i
 
 	// Remove orphan index entries.
 	if opt.Dry {
-		if files, err := query.OrphanFiles(); err != nil {
+		if files, err := query.OriginalFiles(); err != nil {
 			log.Errorf("index: %s (find orphan files)", err)
 		} else if l := len(files); l > 0 {
 			log.Infof("index: found %s", english.Plural(l, "orphan file", "orphan files"))
@@ -108,13 +108,24 @@ func (w *CleanUp) Start(opt CleanUpOptions) (thumbs int, orphans int, sidecars i
 			log.Infof("index: found no orphan files")
 		}
 	} else {
-		if err = query.PurgeOrphans(); err != nil {
+		if err = query.PurgeOrphans(originalsPath); err != nil {
 			log.Errorf("index: %s (purge orphans)", err)
 		}
 	}
 
 	// Remove orphaned media and thumbnail cache files.
 	thumbs, err = w.Cache(opt)
+
+	err = query.PurgeOrphanFolders(originalsPath)
+	if err != nil {
+		log.Warnf("index: %s (purge orphan folders)", err)
+	}
+
+	err = query.PurgeOrphanAlbumFolders(originalsPath)
+
+	if err != nil {
+		log.Warnf("index: %s (purge orphan album folders)", err)
+	}
 
 	// Only update counts if anything was deleted.
 	if len(deleted) > 0 {

@@ -8,13 +8,12 @@
       :refresh="refresh"
       :update-filter="updateFilter"
       :update-query="updateQuery"
-      class="p-page__navigation"
     ></p-album-toolbar>
 
     <div v-if="loading" class="p-page__loading">
       <p-loading></p-loading>
     </div>
-    <div v-else class="p-page__content">
+    <div v-else class="p-page__content" :class="timeline.length > 0 ? 'mb-13' : ''">
       <p-scroll
         :load-more="loadMore"
         :load-disabled="scrollDisabled"
@@ -62,6 +61,33 @@
         :open-location="openLocation"
         :is-shared-view="isShared"
       ></p-photo-view-cards>
+      <div class="timeline position-fixed	bottom-0 w-100">
+        <v-slide-group
+          show-arrows
+          center-active
+          v-model="timelineIds"
+        >
+          <v-slide-group-item
+            v-for="(item, index) in timeline"
+            :key="index"
+            :value="item.UUID"
+            v-slot="{ isSelected }"
+          >
+            <div>
+            <v-btn
+              :key="index"
+              :value="index"
+              :color="isSelected ? 'primary' : undefined"
+              class="ma-2"
+              rounded
+              @click="changeDate(item.UID)"
+            >{{ months[item.Month -1] }} {{ item.Year }}
+            </v-btn>
+            </div>
+          </v-slide-group-item>
+        </v-slide-group>
+      </div>
+
     </div>
   </div>
 </template>
@@ -77,6 +103,7 @@ import PPhotoViewMosaic from "component/photo/view/mosaic.vue";
 import PPhotoViewList from "component/photo/view/list.vue";
 import PScroll from "component/scroll.vue";
 import PLoading from "component/loading.vue";
+import albums from "../albums.vue";
 
 export default {
   name: "PPageAlbumPhotos",
@@ -109,6 +136,7 @@ export default {
     const batchSize = Photo.batchSize();
 
     return {
+      months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
       isShared: this.$config.deny("photos", "manage"),
       canEdit: this.$config.allow("photos", "update") && this.$config.feature("edit"),
       hasPlaces: this.$config.allow("places", "view") && this.$config.feature("places"),
@@ -119,6 +147,9 @@ export default {
       dirty: false,
       complete: false,
       model: new Album(),
+      timeline: [],
+      timelineIds: [],
+      currentUUID: this.$route.params.album,
       uid: uid,
       results: [],
       scrollDisabled: true,
@@ -151,9 +182,9 @@ export default {
   },
   watch: {
     $route() {
-      if (!this.$view.isActive(this)) {
-        return;
-      }
+      // if (!this.$view.isActive(this)) {
+      //   return;
+      // }
 
       this.$view.focus(this.$refs?.page);
 
@@ -191,9 +222,11 @@ export default {
       } else {
         this.search();
       }
+      this.getTimeline();
     },
   },
   created() {
+    this.getTimeline();
     this.findAlbum().then(() => this.search());
 
     this.subscriptions.push(this.$event.subscribe("albums.updated", (ev, data) => this.onAlbumsUpdated(ev, data)));
@@ -369,16 +402,7 @@ export default {
           this.complete = response.count < count;
           this.scrollDisabled = this.complete;
 
-          if (this.complete) {
-            this.offset = offset;
-            if (this.results.length > 1) {
-              if (!this.lightbox.open) {
-                this.$notify.info(
-                  this.$gettextInterpolate(this.$gettext("%{n} pictures found"), { n: this.results.length })
-                );
-              }
-            }
-          } else if (this.results.length >= Photo.limit()) {
+          if (this.results.length >= Photo.limit()) {
             this.offset = offset;
             this.scrollDisabled = true;
             this.complete = true;
@@ -560,12 +584,6 @@ export default {
           if (this.complete) {
             if (!this.results.length) {
               this.$notify.warn(this.$gettext("No pictures found"));
-            } else if (this.results.length === 1) {
-              this.$notify.info(this.$gettext("One picture found"));
-            } else {
-              this.$notify.info(
-                this.$gettextInterpolate(this.$gettext("%{n} pictures found"), { n: this.results.length })
-              );
             }
           } else {
             // this.$notify.info(this.$gettextInterpolate(this.$gettext("More than %{n} pictures found"), {n: 100}));
@@ -708,6 +726,50 @@ export default {
       // TODO: Needed?
       this.$forceUpdate();
     },
+
+    getTimeline() {
+      if (this.$route.name !== "month") {
+        this.timeline = [];
+        return;
+      }
+      const params = { count: 100, offset: 0, type: "month", merged: true, order: "oldest"};
+
+      Album.search(params)
+        .then((resp) => {
+          let albums = resp.models;
+          const currentUID = this.$route.params.album;
+          let currentIndex = null;
+
+          albums.forEach((album, index) => {
+            if (album.UID === currentUID) {
+              currentIndex = index;
+            }
+          });
+
+          let start = currentIndex - 5 < 0 ? 0 : currentIndex - 5;
+          let end = currentIndex + 5 > albums.length ? albums.length : currentIndex + 5;
+          this.timeline = albums.slice(start, end);
+          this.timeline.forEach((album, index) => {
+            if (album.UID === currentUID) {
+              this.timelineIds = index;
+            }
+          });
+        })
+        .catch((reason) => {
+          this.timeline = [];
+          console.log(reason);
+          this.$notify.error(
+            this.$gettextInterpolate(this.$gettext("Error %{n}"), { n: reason })
+          );
+        })
+        .finally(() => {
+        });
+    },
+
+    changeDate(UID) {
+      this.lastFilter = {};
+      this.$router.push({ name: 'month', params: { album: UID, slug: 'view'}});
+    }
   },
 };
 </script>

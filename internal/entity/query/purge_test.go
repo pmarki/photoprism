@@ -28,7 +28,7 @@ func TestPurgeOrphans(t *testing.T) {
 }
 
 func TestPurgeOrphanFiles(t *testing.T) {
-	files, err := OrphanFiles()
+	files, err := OriginalFiles()
 
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +46,7 @@ func TestPurgeOrphanFiles(t *testing.T) {
 		t.Logf("removed %d orphan files", count)
 	}
 
-	if result, err := OrphanFiles(); err != nil {
+	if result, err := OriginalFiles(); err != nil {
 		t.Fatal(err)
 	} else if len(result) != 0 {
 		t.Errorf("there should be no more orphan files")

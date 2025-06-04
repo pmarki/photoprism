@@ -45,6 +45,11 @@ export const DayUnknown = -1;
 export const TimeZoneUTC = "UTC";
 export const TimeZoneLocal = "Local";
 
+export const VideoWebshareMimeType = "video/mp4";
+export const VideoWebshareExtension = ".mp4";
+export const TranscodeVideoForWebshare = true;
+export const WebshareFormat = "mp4";
+
 export let BatchSize = 156;
 
 export class Photo extends RestModel {
@@ -726,6 +731,59 @@ export class Photo extends RestModel {
   // or video file).
   getDownloadUrl() {
     return `${$config.apiUri}/dl/${this.fileHash()}?t=${$config.downloadToken}`;
+  }
+
+  getWebshareFile() {
+    const { file } = this.getWebshare();
+    return file;
+  }
+
+  getWebshareDownloadUrl() {
+    const { url } = this.getWebshare();
+    return url;
+  }
+
+  getWebshare() {
+    if (!this.Files) {
+      return;
+    }
+    let url = null;
+    let file = null;
+    if (this.Type == media.Live || this.Type == media.Raw) {
+      // use jpeg or png (pngs are not converted to jpeg)
+      file = this.Files.find((f) => f.FileType === media.FormatJpeg || f.FileType === media.FormatPng);
+    } else if (this.Type == media.Sidecar) {
+      // I am not sure if this could even happen
+      // use first file
+      file = this.Files[0];
+    } else if (this.Type == media.Image) {
+      // use main file
+      file = this.primaryFile();
+    } else if (this.Type == media.Animated) {
+      // use gif or jpeg
+      file = this.Files.find((f) => f.FileType === media.FormatGif);
+      if (!file) {
+        file = this.Files.find((f) => f.FileType === media.FormatJpeg);
+      }
+    } else if (this.Type == media.Vector) {
+      // if svg, use it, otherwise use jpeg
+      file = this.Files.find((f) => f.FileType === media.FormatSVG);
+      if (!file) {
+        file = this.Files.find((f) => f.FileType === media.FormatJpeg);
+      }
+    } else if (this.Type == media.Video) {
+      // use mp4
+      file = this.videoFile();
+      url = `videos/${file.Hash}/${$config.previewToken}/${WebshareFormat}`;
+    }
+    if (!file) {
+      file = this.primaryFile();
+      console.log("No file found! Falling back to main file.");
+    }
+    if (!url) {
+      url = `dl/${file.Hash}?t=${$config.downloadToken}`;
+    }
+    return { url, file };
   }
 
   // Downloads all related files if they exist and depending on the settings.

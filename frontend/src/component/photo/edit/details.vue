@@ -167,158 +167,6 @@
               >
               </v-autocomplete>
             </v-col>
-            <v-col cols="4" md="2">
-              <v-text-field
-                v-model="view.model.Altitude"
-                :disabled="disabled"
-                hide-details
-                flat
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                :label="$gettext('Altitude (m)')"
-                placeholder=""
-                color="surface-variant"
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.number(false, -10000, 1000000)"
-                class="input-altitude"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="4" sm="6" md="3">
-              <v-text-field
-                v-model="view.model.Lat"
-                :append-inner-icon="view.model.PlaceSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                :label="$gettext('Latitude')"
-                placeholder=""
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.lat(false)"
-                class="input-latitude"
-                @paste="pastePosition"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="4" sm="6" md="3">
-              <v-text-field
-                v-model="view.model.Lng"
-                :append-inner-icon="view.model.PlaceSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                :label="$gettext('Longitude')"
-                placeholder=""
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.lng(false)"
-                class="input-longitude"
-                @paste="pastePosition"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" class="p-camera-select">
-              <v-select
-                v-model="view.model.CameraID"
-                :append-inner-icon="view.model.CameraSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                :placeholder="$gettext('Camera')"
-                :menu-props="{ maxHeight: 346 }"
-                autocomplete="off"
-                hide-details
-                item-value="ID"
-                item-title="Name"
-                :items="cameraOptions"
-                prepend-inner-icon="mdi-camera"
-                density="comfortable"
-                class="input-camera"
-              >
-              </v-select>
-            </v-col>
-            <v-col cols="6" md="3">
-              <v-text-field
-                v-model="view.model.Iso"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                label="ISO"
-                placeholder=""
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.number(false, 0, 1048576)"
-                class="input-iso"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="6" md="3">
-              <v-text-field
-                v-model="view.model.Exposure"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                :label="$gettext('Exposure')"
-                placeholder=""
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.text(false, 0, 64)"
-                class="input-exposure"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" class="p-lens-select">
-              <v-select
-                v-model="view.model.LensID"
-                :append-inner-icon="view.model.CameraSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                :placeholder="$gettext('Lens')"
-                :menu-props="{ maxHeight: 346 }"
-                autocomplete="off"
-                hide-details
-                item-value="ID"
-                item-title="Name"
-                :items="lensOptions"
-                prepend-inner-icon="mdi-camera-iris"
-                density="comfortable"
-                class="input-lens"
-              >
-              </v-select>
-            </v-col>
-            <v-col cols="6" md="3">
-              <v-text-field
-                v-model="view.model.FNumber"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                :label="$gettext('F Number')"
-                placeholder=""
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.number(false, 0, 1048576)"
-                class="input-fnumber"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="6" md="3">
-              <v-text-field
-                v-model="view.model.FocalLength"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                :label="$gettext('Focal Length')"
-                placeholder=""
-                density="comfortable"
-                validate-on="input"
-                :rules="rules.number(false, 0, 1048576)"
-                class="input-focal-length"
-              ></v-text-field>
-            </v-col>
           </v-row>
           <v-row dense>
             <v-col cols="12" md="6">
@@ -339,20 +187,6 @@
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field
-                v-model="view.model.Details.Copyright"
-                :append-inner-icon="view.model.Details.CopyrightSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                :rules="[textRule]"
-                hide-details
-                autocomplete="off"
-                :label="$gettext('Copyright')"
-                placeholder=""
-                density="comfortable"
-                class="input-copyright"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-text-field
                 v-model="view.model.Details.Artist"
                 :append-inner-icon="view.model.Details.ArtistSrc === 'manual' ? 'mdi-check' : ''"
                 :disabled="disabled"
@@ -364,22 +198,6 @@
                 density="comfortable"
                 class="input-artist"
               ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-textarea
-                v-model="view.model.Details.License"
-                :append-inner-icon="view.model.Details.LicenseSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                :rules="[textRule]"
-                hide-details
-                autocomplete="off"
-                auto-grow
-                :label="$gettext('License')"
-                placeholder=""
-                :rows="1"
-                density="comfortable"
-                class="input-license"
-              ></v-textarea>
             </v-col>
             <v-col cols="12" md="8">
               <v-textarea

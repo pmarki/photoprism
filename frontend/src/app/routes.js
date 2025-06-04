@@ -200,7 +200,7 @@ export default [
     path: "/folders",
     component: Albums,
     meta: { title: $gettext("Folders"), requiresAuth: true },
-    props: { view: "folder", defaultOrder: "name", staticFilter: { type: "folder" } },
+    props: { view: "folder", defaultOrder: "name_reverse", staticFilter: { type: "folder" } },
   },
   {
     name: "folder",
@@ -438,8 +438,8 @@ export default [
   },
   {
     name: "library_index",
-    path: "/index",
-    component: Library,
+    path: "/settings/index",
+    component: Settings,
     meta: { title: $gettext("Library"), requiresAuth: true, background: "background" },
     props: { tab: "library_index" },
     beforeEnter: (to, from, next) => {

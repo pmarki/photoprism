@@ -32,6 +32,13 @@ import * as media from "common/media";
 import * as can from "common/can";
 import * as formats from "options/formats";
 
+import {
+  MediaVideo,
+  VideoWebshareExtension,
+  VideoWebshareMimeType,
+  TranscodeVideoForWebshare,
+} from "../model/photo";
+
 const Nanosecond = 1;
 const Microsecond = 1000 * Nanosecond;
 const Millisecond = 1000 * Microsecond;
@@ -857,5 +864,27 @@ export default class $util {
 
     $notify.warn($gettext("Not supported"));
     return false;
+  }
+
+  static JSFileFromPhoto(blob, photo) {
+    return new File([blob], photo.Name.replaceAll("/", "-"), {
+      type: photo.Mime,
+      lastModified: photo.ModTime,
+    });
+  }
+
+  static JSFileForWebshare(blob, photo) {
+    if (TranscodeVideoForWebshare && photo.MediaType == media.Video) {
+      return new File(
+        [blob],
+        photo.Name.replaceAll("/", "-").replace(/\.[^/.]+$/, "") + VideoWebshareExtension,
+        {
+          type: VideoWebshareMimeType,
+          lastModified: photo.ModTime,
+        }
+      );
+    } else {
+      return this.JSFileFromPhoto(blob, photo);
+    }
   }
 }

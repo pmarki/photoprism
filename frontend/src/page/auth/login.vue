@@ -28,7 +28,7 @@
       </div>
       <v-row id="auth-layout" class="auth-layout">
         <v-col cols="12" sm="9" md="6" lg="5" xl="3">
-          <v-form ref="form" class="auth-login-form" accept-charset="UTF-8" @submit.prevent="onLogin">
+          <v-form v-if="passwordMode" ref="form" class="auth-login-form" accept-charset="UTF-8" @submit.prevent="onLogin">
             <v-card id="auth-login-box" class="elevation-12 auth-login-box pa-1 blur-7">
               <v-card-text>
                 <p-auth-header></p-auth-header>
@@ -199,6 +199,28 @@
               </v-card-text>
             </v-card>
           </v-form>
+          <div v-if="!passwordMode">
+            <v-card id="auth-login-box" class="elevation-12 auth-login-box pa-1 blur-7">
+              <v-card-text>
+                <v-row align="start" dense></v-row>
+                <v-col cols="12" class="oidc-actions">
+                  <div class="text-center mt-6">
+                    <v-btn
+                      :disabled="loading"
+                      tabindex="5"
+                      color="highlight"
+                      variant="flat"
+                      block
+                      class="action-oidc-login"
+                      @click.stop.prevent="onLogin"
+                    >
+                      {{ $gettext(`Click to login`) }}
+                    </v-btn>
+                  </div>
+                </v-col>
+              </v-card-text>
+            </v-card>
+          </div>
         </v-col>
       </v-row>
       <p-auth-footer></p-auth-footer>
@@ -233,6 +255,7 @@ export default {
       wallpaperUri: this.$config.values.wallpaperUri,
       registerUri: this.$config.values.registerUri,
       passwordResetUri: this.$config.values.passwordResetUri,
+      passwordMode: this.$config.values.authMode === "password",
       settings: new Settings(this.$config.getSettings()),
       options,
       rtl: this.$config.isRtl(),
@@ -318,7 +341,7 @@ export default {
       const password = this.password.trim();
       const code = this.code.trim();
 
-      if (username === "" || password === "") {
+      if (this.passwordMode && (username === "" || password === "")) {
         return;
       }
 

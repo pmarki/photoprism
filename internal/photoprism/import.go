@@ -299,11 +299,11 @@ func (imp *Import) Cancel() {
 // Format: 2006/01/20060102_150405_CHECKSUM.ext
 func (imp *Import) DestinationFilename(mainFile *MediaFile, mediaFile *MediaFile, folder string) (string, error) {
 	// Get the import destination path and file name patterns.
-	pathPattern, namePattern := imp.conf.Settings().Import.GetDestName()
+	_, namePattern := imp.conf.Settings().Import.GetDestName()
 
 	fileName := mainFile.CanonicalName(namePattern)
 	fileExtension := mediaFile.Extension()
-	dateCreated := mainFile.DateCreated()
+	//dateCreated := mainFile.DateCreated()
 
 	if !mediaFile.IsSidecar() {
 		if f, err := entity.FirstFileByHash(mediaFile.Hash()); err == nil {
@@ -318,7 +318,7 @@ func (imp *Import) DestinationFilename(mainFile *MediaFile, mediaFile *MediaFile
 
 	// Find and return the next available file name if the default name is already being used by another file.
 	i := 0
-	pathName := filepath.Join(imp.originalsPath(), folder, dateCreated.Format(pathPattern))
+	pathName := filepath.Join(imp.originalsPath(), folder)
 	filePath := filepath.Join(pathName, fileName+fileExtension)
 
 	for fs.FileExists(filePath) {
