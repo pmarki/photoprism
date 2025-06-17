@@ -134,6 +134,17 @@ export class Album extends RestModel {
     return "";
   }
 
+  getThumbs(size) {
+    let thumbs = [];
+    if (this.Thumb) {
+      this.Thumb.split(" ").forEach((item) => {
+        thumbs.push(`${$config.contentUri}/t/${item}/${$config.previewToken}/${size}`);
+      });
+
+      return thumbs;
+    }
+  }
+
   thumbnailUrl(size) {
     if (this.Thumb) {
       return `${$config.contentUri}/t/${this.Thumb}/${$config.previewToken}/${size}`;

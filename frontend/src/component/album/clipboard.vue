@@ -38,7 +38,7 @@
           @click.stop="shareDialog()"
         >{{$gettext('Share')}}</v-btn>
         <v-btn
-          v-if="canManage"
+          v-if="canEdit"
           key="action-edit"
           :title="$gettext('Edit')"
           prepend-icon="mdi-pencil"
@@ -147,6 +147,7 @@ export default {
         this.$config.allow("albums", "download") && features.download && !settings?.albums?.download?.disabled,
       canShare: this.$config.allow("albums", "share") && features.share,
       canManage: this.$config.allow("albums", "manage"),
+      canEdit: this.$config.allow("albums", "manage") && this.$route.name === "albums",
       deletable: ["album", "moment", "state"],
       expanded: false,
       dialog: {

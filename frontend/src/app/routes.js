@@ -31,6 +31,7 @@ import Browse from "page/library/browse.vue";
 import Errors from "page/library/errors.vue";
 import Labels from "page/labels.vue";
 import People from "page/people.vue";
+import Calendar from "page/calendar.vue";
 import Library from "page/library.vue";
 import Settings from "page/settings.vue";
 import Admin from "page/admin.vue";
@@ -185,7 +186,7 @@ export default [
   {
     name: "calendar",
     path: "/calendar",
-    component: Albums,
+    component: Calendar,
     meta: { title: $gettext("Calendar"), requiresAuth: true },
     props: { view: "month", defaultOrder: "newest", staticFilter: { type: "month" } },
   },

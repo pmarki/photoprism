@@ -45,9 +45,13 @@ export default {
   emits: ["close", "confirm"],
   data() {
     return {
-      isFolder: this.$route.name.startsWith("folder"),
       name: null,
     };
+  },
+  computed: {
+    isFolder() {
+      return this.$route.name.startsWith("folder");
+    }
   },
   methods: {
     title() {

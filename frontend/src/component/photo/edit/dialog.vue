@@ -46,7 +46,7 @@
           </template>
         </v-tab>
 
-        <v-tab id="tab-labels" value="labels" ripple :disabled="!$config.feature('labels')">
+        <v-tab id="tab-labels" value="labels" ripple v-if="!$config.feature('labels')">
           <v-icon v-if="$vuetify.display.smAndDown" :title="$gettext('Labels')">mdi-label</v-icon>
           <template v-else>
             <v-icon :size="18" start>mdi-label</v-icon>
@@ -55,7 +55,7 @@
           <v-badge v-if="model.Labels.length" color="surface-variant" inline :content="model.Labels.length"></v-badge>
         </v-tab>
 
-        <v-tab id="tab-people" value="people" :disabled="!$config.feature('people')" ripple>
+        <v-tab id="tab-people" value="people" v-if="!$config.feature('people')" ripple>
           <v-icon v-if="$vuetify.display.smAndDown" :title="$gettext('People')">mdi-account-multiple</v-icon>
           <template v-else>
             <v-icon :size="18" start>mdi-account-multiple</v-icon>

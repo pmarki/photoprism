@@ -1,0 +1,1 @@
+ALTER TABLE albums MODIFY `thumb` VARBINARY(512);

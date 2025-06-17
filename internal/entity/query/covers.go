@@ -10,6 +10,8 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/photoprism/photoprism/internal/entity"
+	"github.com/photoprism/photoprism/internal/entity/search"
+	"github.com/photoprism/photoprism/internal/form"
 	"github.com/photoprism/photoprism/internal/mutex"
 	"github.com/photoprism/photoprism/pkg/clean"
 	"github.com/photoprism/photoprism/pkg/media"
@@ -23,47 +25,22 @@ func UpdateAlbumDefaultCovers() (err error) {
 	mutex.Index.Lock()
 	defer mutex.Index.Unlock()
 
-	start := time.Now()
-
 	var res *gorm.DB
 
-	condition := gorm.Expr("album_type = ? AND thumb_src = ?", entity.AlbumManual, entity.SrcAuto)
+	var albums []entity.Album
 
-	switch DbDialect() {
-	case MySQL:
-		res = Db().Exec(`UPDATE albums LEFT JOIN (
-    	SELECT p2.album_uid, f.file_hash FROM files f, (
-        	SELECT pa.album_uid, max(p.id) AS photo_id FROM photos p
-            JOIN photos_albums pa ON pa.photo_uid = p.photo_uid AND pa.hidden = 0 AND pa.missing = 0
-        	WHERE p.photo_quality > 0 AND p.photo_private = 0 AND p.deleted_at IS NULL
-        	GROUP BY pa.album_uid) p2 WHERE p2.photo_id = f.photo_id AND f.file_primary = 1 AND f.file_error = '' AND f.file_type IN (?)
-			) b ON b.album_uid = albums.album_uid
-		SET thumb = b.file_hash WHERE ?`, media.PreviewExpr, condition)
-	case SQLite3:
-		res = Db().Table(entity.Album{}.TableName()).
-			UpdateColumn("thumb", gorm.Expr(`(
-		SELECT f.file_hash FROM files f 
-			JOIN photos_albums pa ON pa.album_uid = albums.album_uid AND pa.photo_uid = f.photo_uid AND pa.hidden = 0 AND pa.missing = 0
-			JOIN photos p ON p.id = f.photo_id AND p.photo_private = 0 AND p.deleted_at IS NULL AND p.photo_quality > 0
-			WHERE f.deleted_at IS NULL AND f.file_missing = 0 AND f.file_hash <> '' AND f.file_primary = 1 AND f.file_error = '' AND f.file_type IN (?)
-			ORDER BY p.taken_at DESC LIMIT 1
-		) WHERE ?`, media.PreviewExpr, condition))
-	default:
-		log.Warnf("sql: unsupported dialect %s", DbDialect())
-		return nil
+	res = Db().Table(entity.Album{}.TableName()).Where("album_type = ?", "album").Scan(&albums)
+
+	if res.Error != nil {
+		log.Errorf("UpdateAlbumDefaultCovers, err when loading albums %s", res.Error)
+		return
 	}
 
-	err = res.Error
-
-	if err == nil {
-		log.Debugf("covers: updated %s [%s]", english.Plural(int(res.RowsAffected), "album", "albums"), time.Since(start))
-	} else if strings.Contains(err.Error(), "Error 1054") {
-		log.Errorf("covers: failed to update albums, potentially incompatible database version")
-		log.Errorf("%s see https://jira.mariadb.org/browse/MDEV-25362", err)
-		return nil
+	for _, album := range albums {
+		UpdateCover(album.AlbumUID)
 	}
 
-	return err
+	return nil
 }
 
 // UpdateAlbumFolderCovers updates folder album cover thumbs.
@@ -71,47 +48,22 @@ func UpdateAlbumFolderCovers() (err error) {
 	mutex.Index.Lock()
 	defer mutex.Index.Unlock()
 
-	start := time.Now()
-
 	var res *gorm.DB
 
-	condition := gorm.Expr("album_type = ? AND thumb_src = ?", entity.AlbumFolder, entity.SrcAuto)
+	var albums []entity.Album
 
-	switch DbDialect() {
-	case MySQL:
-		res = Db().Exec(`UPDATE albums LEFT JOIN (
-		SELECT p2.photo_path, f.file_hash FROM files f, (
-			SELECT p.photo_path, max(p.id) AS photo_id FROM photos p
-			WHERE p.photo_quality > 0 AND p.photo_private = 0 AND p.deleted_at IS NULL
-			GROUP BY p.photo_path) p2 WHERE p2.photo_id = f.photo_id AND f.file_primary = 1 AND f.file_error = '' AND f.file_type IN (?)
-			) b ON b.photo_path = albums.album_path
-		SET thumb = b.file_hash WHERE ?`, media.PreviewExpr, condition)
-	case SQLite3:
-		res = Db().Table(entity.Album{}.TableName()).UpdateColumn("thumb", gorm.Expr(`(
-		SELECT f.file_hash FROM files f,(
-			SELECT p.photo_path, max(p.id) AS photo_id FROM photos p
-			  WHERE p.photo_quality > 0 AND p.photo_private = 0 AND p.deleted_at IS NULL
-			  GROUP BY p.photo_path
-			) b
-		WHERE f.photo_id = b.photo_id  AND f.file_primary = 1 AND f.file_error = '' AND f.file_type IN (?)
-		AND b.photo_path = albums.album_path LIMIT 1)
-		WHERE ?`, media.PreviewExpr, condition))
-	default:
-		log.Warnf("sql: unsupported dialect %s", DbDialect())
-		return nil
+	res = Db().Table(entity.Album{}.TableName()).Where("album_type = ?", "folder").Scan(&albums)
+
+	if res.Error != nil {
+		log.Errorf("UpdateAlbumDefaultCovers, err when loading albums %s", res.Error)
+		return
 	}
 
-	err = res.Error
-
-	if err == nil {
-		log.Debugf("covers: updated %s [%s]", english.Plural(int(res.RowsAffected), "folder", "folders"), time.Since(start))
-	} else if strings.Contains(err.Error(), "Error 1054") {
-		log.Errorf("covers: failed to update folders, potentially incompatible database version")
-		log.Errorf("%s see https://jira.mariadb.org/browse/MDEV-25362", err)
-		return nil
+	for _, album := range albums {
+		UpdateCover(album.AlbumUID)
 	}
 
-	return err
+	return nil
 }
 
 // UpdateAlbumMonthCovers updates month album cover thumbs.
@@ -119,47 +71,22 @@ func UpdateAlbumMonthCovers() (err error) {
 	mutex.Index.Lock()
 	defer mutex.Index.Unlock()
 
-	start := time.Now()
-
 	var res *gorm.DB
 
-	condition := gorm.Expr("album_type = ? AND thumb_src = ?", entity.AlbumMonth, entity.SrcAuto)
+	var albums []entity.Album
 
-	switch DbDialect() {
-	case MySQL:
-		res = Db().Exec(`UPDATE albums LEFT JOIN (
-		SELECT p2.photo_year, p2.photo_month, f.file_hash FROM files f, (
-			SELECT p.photo_year, p.photo_month, max(p.id) AS photo_id FROM photos p
-			WHERE p.photo_quality > 0 AND p.photo_private = 0 AND p.deleted_at IS NULL
-			GROUP BY p.photo_year, p.photo_month) p2 WHERE p2.photo_id = f.photo_id AND f.file_primary = 1 AND f.file_error = '' AND f.file_type IN (?)
-			) b ON b.photo_year = albums.album_year AND b.photo_month = albums.album_month
-		SET thumb = b.file_hash WHERE ?`, media.PreviewExpr, condition)
-	case SQLite3:
-		res = Db().Table(entity.Album{}.TableName()).UpdateColumn("thumb", gorm.Expr(`(
-		SELECT f.file_hash FROM files f,(
-			SELECT p.photo_year, p.photo_month, max(p.id) AS photo_id FROM photos p
-			  WHERE p.photo_quality > 0 AND p.photo_private = 0 AND p.deleted_at IS NULL
-			  GROUP BY p.photo_year, p.photo_month
-			) b
-		WHERE f.photo_id = b.photo_id AND f.file_primary = 1 AND f.file_error = '' AND f.file_type IN (?)
-		AND b.photo_year = albums.album_year AND b.photo_month = albums.album_month LIMIT 1)
-		WHERE ?`, media.PreviewExpr, condition))
-	default:
-		log.Warnf("sql: unsupported dialect %s", DbDialect())
-		return nil
+	res = Db().Table(entity.Album{}.TableName()).Where("album_type = ?", "month").Scan(&albums)
+
+	if res.Error != nil {
+		log.Errorf("UpdateAlbumDefaultCovers, err when loading albums %s", res.Error)
+		return
 	}
 
-	err = res.Error
-
-	if err == nil {
-		log.Debugf("covers: updated %s [%s]", english.Plural(int(res.RowsAffected), "month", "months"), time.Since(start))
-	} else if strings.Contains(err.Error(), "Error 1054") {
-		log.Errorf("covers: failed to update calendar, potentially incompatible database version")
-		log.Errorf("%s see https://jira.mariadb.org/browse/MDEV-25362", err)
-		return nil
+	for _, album := range albums {
+		UpdateCover(album.AlbumUID)
 	}
 
-	return err
+	return nil
 }
 
 // UpdateAlbumCovers updates album cover thumbs.
@@ -327,6 +254,54 @@ func UpdateCoversAsync() {
 			log.Warnf("index: %s (update covers)", clean.Error(err))
 		}
 	}()
+}
+
+// UpdateCover updates cover for given album
+func UpdateCover(albumUID string) {
+	frm := form.SearchPhotos{
+		Scope:   albumUID,
+		Type:    "image",
+		Primary: true,
+	}
+
+	photos, count, err := search.Photos(frm)
+
+	if err != nil {
+		log.Errorf("Can't generate cover for album %s %s", albumUID, err)
+		return
+	}
+
+	var thumbs []string
+	if count == 0 {
+		return
+	}
+	if count > 0 {
+		thumbs = append(thumbs, photos[0].FileHash)
+	}
+	if count > 1 {
+		if count == 3 {
+			thumbs = append(thumbs, photos[1].FileHash)
+		}
+		if count > 3 {
+			i1 := len(photos) * 1 / 3
+			i2 := len(photos) * 2 / 3
+
+			thumbs = append(thumbs, photos[i1].FileHash)
+			thumbs = append(thumbs, photos[i2].FileHash)
+		}
+
+		thumbs = append(thumbs, photos[len(photos)-1].FileHash)
+	}
+
+	thumb := strings.Join(thumbs, " ")
+	log.Infof("thumbs for %s: %s", albumUID, thumb)
+
+	var res *gorm.DB
+	res = Db().Table(entity.Album{}.TableName()).Where("album_UID = ?", albumUID).Update("thumb", thumb)
+	if res.Error != nil {
+		log.Errorf("Cant save thumb %s %s", albumUID, err)
+		return
+	}
 }
 
 // UpdateCovers updates album, subject, and label cover thumbs.

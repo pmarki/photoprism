@@ -11,148 +11,7 @@
       <template v-slot:menu-actions>
         <p-action-menu :items="menuActions" button-class="ms-1"></p-action-menu>
       </template>
-
     </p-navigation>
-<!--    <v-form-->
-<!--      ref="form"-->
-<!--      validate-on="invalid-input"-->
-<!--      class="p-albums-search p-page__navigation"-->
-<!--      @submit.prevent="updateQuery()"-->
-<!--    >-->
-<!--      <v-toolbar-->
-<!--        flat-->
-<!--        :density="$vuetify.display.smAndDown ? 'compact' : 'default'"-->
-<!--        color="secondary"-->
-<!--        class="page-toolbar"-->
-<!--      >-->
-<!--        <v-text-field-->
-<!--          :model-value="filter.q"-->
-<!--          :density="density"-->
-<!--          tabindex="1"-->
-<!--          hide-details-->
-<!--          clearable-->
-<!--          overflow-->
-<!--          single-line-->
-<!--          rounded="pill"-->
-<!--          variant="solo-filled"-->
-<!--          color="surface-variant"-->
-<!--          validate-on="invalid-input"-->
-<!--          autocomplete="off"-->
-<!--          autocorrect="off"-->
-<!--          autocapitalize="none"-->
-<!--          :prepend-inner-icon="canExpand ? 'mdi-tune' : 'mdi-magnify'"-->
-<!--          :placeholder="$gettext('Search')"-->
-<!--          class="input-search background-inherit elevation-0"-->
-<!--          :class="{ 'input-search&#45;&#45;expanded': expanded, 'input-search&#45;&#45;focus': !canExpand }"-->
-<!--          @update:model-value="-->
-<!--            (v) => {-->
-<!--              updateFilter({ q: v });-->
-<!--            }-->
-<!--          "-->
-<!--          @keyup.enter="() => updateQuery()"-->
-<!--          @keyup.esc.exact="() => hideExpansionPanel()"-->
-<!--          @click:prepend-inner.stop="toggleExpansionPanel"-->
-<!--          @click:clear="-->
-<!--            () => {-->
-<!--              updateQuery({ q: '' });-->
-<!--            }-->
-<!--          "-->
-<!--        ></v-text-field>-->
-
-<!--        <v-btn-->
-<!--          v-if="canManage && staticFilter.type === 'album'"-->
-<!--          :title="$gettext('Add Album')"-->
-<!--          tabindex="2"-->
-<!--          icon="mdi-plus"-->
-<!--          class="action-add ms-1"-->
-<!--          @click.prevent="create()"-->
-<!--        ></v-btn>-->
-
-<!--        <p-action-menu-->
-<!--          v-if="$vuetify.display.mdAndUp"-->
-<!--          :items="menuActions"-->
-<!--          :tabindex="3"-->
-<!--          button-class="ms-1"-->
-<!--        ></p-action-menu>-->
-<!--      </v-toolbar>-->
-
-<!--      <div class="toolbar-expansion-panel">-->
-<!--        <v-expand-transition>-->
-<!--          <v-card v-show="expanded" flat color="secondary">-->
-<!--            <v-card-text class="dense">-->
-<!--              <v-row dense>-->
-<!--                <v-col cols="12" sm="4" class="p-year-select">-->
-<!--                  <v-select-->
-<!--                    :model-value="filter.year"-->
-<!--                    :label="$gettext('Year')"-->
-<!--                    :disabled="context === 'state'"-->
-<!--                    :menu-props="{ maxHeight: 346 }"-->
-<!--                    tabindex="4"-->
-<!--                    single-line-->
-<!--                    hide-details-->
-<!--                    variant="solo-filled"-->
-<!--                    :density="density"-->
-<!--                    :items="yearOptions()"-->
-<!--                    item-title="text"-->
-<!--                    item-value="value"-->
-<!--                    @update:model-value="-->
-<!--                      (v) => {-->
-<!--                        updateQuery({ year: v });-->
-<!--                      }-->
-<!--                    "-->
-<!--                  >-->
-<!--                  </v-select>-->
-<!--                </v-col>-->
-<!--                <v-col cols="12" sm="4" class="p-category-select">-->
-<!--                  <v-select-->
-<!--                    :model-value="filter.category"-->
-<!--                    :label="$gettext('Category')"-->
-<!--                    :menu-props="{ maxHeight: 346 }"-->
-<!--                    tabindex="5"-->
-<!--                    single-line-->
-<!--                    hide-details-->
-<!--                    variant="solo-filled"-->
-<!--                    :density="density"-->
-<!--                    :items="categories"-->
-<!--                    item-title="text"-->
-<!--                    item-value="value"-->
-<!--                    @update:model-value="-->
-<!--                      (v) => {-->
-<!--                        updateQuery({ category: v });-->
-<!--                      }-->
-<!--                    "-->
-<!--                  >-->
-<!--                  </v-select>-->
-<!--                </v-col>-->
-<!--                <v-col cols="12" sm="4" class="p-sort-select">-->
-<!--                  <v-select-->
-<!--                    :model-value="filter.order"-->
-<!--                    :label="$gettext('Sort Order')"-->
-<!--                    :menu-props="{ maxHeight: 400 }"-->
-<!--                    tabindex="6"-->
-<!--                    single-line-->
-<!--                    hide-details-->
-<!--                    variant="solo-filled"-->
-<!--                    :density="density"-->
-<!--                    :items="-->
-<!--                      context === 'album' ? options.sorting : options.sorting.filter((item) => item.value !== 'edited')-->
-<!--                    "-->
-<!--                    item-title="text"-->
-<!--                    item-value="value"-->
-<!--                    @update:model-value="-->
-<!--                      (v) => {-->
-<!--                        updateQuery({ order: v });-->
-<!--                      }-->
-<!--                    "-->
-<!--                  >-->
-<!--                  </v-select>-->
-<!--                </v-col>-->
-<!--              </v-row>-->
-<!--            </v-card-text>-->
-<!--          </v-card>-->
-<!--        </v-expand-transition>-->
-<!--      </div>-->
-<!--    </v-form>-->
 
     <div v-if="loading" class="p-page__loading">
       <p-loading></p-loading>
@@ -181,85 +40,61 @@
           <div class="font-weight-bold">
             {{ $gettext(`No albums found`) }}
           </div>
-          <div class="mt-2">
-            {{ $gettext(`Try again using other filters or keywords.`) }}
-            <template v-if="staticFilter.type === 'album'">
-              {{
-                $gettext(
-                  `After selecting pictures from search results, you can add them to an album using the context menu.`
-                )
-              }}
-            </template>
-            <template v-else>
-              {{
-                $gettext(
-                  `Your library is continuously analyzed to automatically create albums of special moments, trips, and places.`
-                )
-              }}
-            </template>
-          </div>
         </v-alert>
-
-        <div
-          v-if="canManage && staticFilter.type === 'album' && config.count.albums === 0"
-          class="d-flex justify-center mt-8 mb-4"
-        >
-          <v-btn color="secondary" rounded variant="flat" class="action-add" @click.prevent="dialog.create = true">
-            {{ $gettext(`Add Album`) }}
-          </v-btn>
-        </div>
       </div>
-      <div
-        v-else
-        class="v-row search-results album-results cards-view"
-        :class="{ 'select-results': selection.length > 0 }"
-      >
-        <div
-          v-for="(album, index) in results"
-          :key="album.UID"
-          ref="items"
-          class="v-col-6 v-col-sm-4 v-col-md-3 v-col-xl-2 elevation-7"
-        >
+      <div v-else>
+        <div v-for="years in byYear" :key="years.year">
+          <h4 class="text-h5 mt-3 pl-3">{{ years.year }}</h4>
+          <div
+            class="v-row search-results album-results cards-view"
+            :class="{ 'select-results': selection.length > 0 }"
+          >
+            <div
+              v-for="album in years.albums"
+              :key="album.UID"
+              ref="items"
+              class="v-col-6 v-col-sm-4 v-col-md-3 v-col-xl-2"
+            >
           <div
             :data-uid="album.UID"
-            class="result not-selectable "
+            class="result not-selectable"
             :class="album.classes(selection.includes(album.UID))"
-            @contextmenu.stop="onContextMenu($event, index)"
+            @contextmenu.stop="onContextMenu($event, album.Index)"
           >
             <div
               :key="album.UID"
               :title="album.Title"
-c              class="preview"
-              @touchstart.passive="input.touchStart($event, index)"
-              @touchend.stop="onClick($event, index)"
-              @mousedown.stop.prevent="input.mouseDown($event, index)"
-              @click.stop.prevent="onClick($event, index)"
+              class="preview"
+              @touchstart.passive="input.touchStart($event, album.Index)"
+              @touchend.stop="onClick($event, album.Index)"
+              @mousedown.stop.prevent="input.mouseDown($event, album.Index)"
+              @click.stop.prevent="onClick($event, album.Index)"
             >
               <div class="position-relative w-100 h-100">
                 <img v-for="(tile, i) in album.getThumbs('tile_500')"
-                  :key="i"
+                     :key="i"
                      :src="tile"
                      class="position-absolute"
                      :class="'tile' + i"
-                 alt="abc"/>
+                     alt="abc"/>
               </div>
               <div class="preview__overlay"></div>
               <button
                 v-if="canShare && album.LinkCount > 0"
                 class="action-share"
-                @touchstart.stop="input.touchStart($event, index)"
-                @touchend.stop="onShare($event, index)"
+                @touchstart.stop="input.touchStart($event, album.Index)"
+                @touchend.stop="onShare($event, album.Index)"
                 @touchmove.stop.prevent
-                @click.stop.prevent="onShare($event, index)"
+                @click.stop.prevent="onShare($event, album.Index)"
               >
                 <i class="mdi mdi-share-variant" />
               </button>
               <button
                 class="input-select"
-                @touchstart.stop="input.touchStart($event, index)"
-                @touchend.stop="onSelect($event, index)"
+                @touchstart.stop="input.touchStart($event, album.Index)"
+                @touchend.stop="onSelect($event, album.Index)"
                 @touchmove.stop.prevent
-                @click.stop.prevent="onSelect($event, index)"
+                @click.stop.prevent="onSelect($event, album.Index)"
               >
                 <i class="mdi mdi-check-circle select-on" />
                 <i class="mdi mdi-circle-outline select-off" />
@@ -267,10 +102,10 @@ c              class="preview"
               <button
                 v-if="canManage && experimental && featPrivate && album.Private"
                 class="input-private"
-                @touchstart.stop="input.touchStart($event, index)"
-                @touchend.stop="onEdit($event, index)"
+                @touchstart.stop="input.touchStart($event, album.Index)"
+                @touchend.stop="onEdit($event, album.Index)"
                 @touchmove.stop.prevent
-                @click.stop.prevent="onEdit($event, index)"
+                @click.stop.prevent="onEdit($event, album.Index)"
               >
                 <i class="mdi mdi-lock" />
               </button>
@@ -303,6 +138,8 @@ c              class="preview"
               </button>
             </div>
           </div>
+        </div>
+            </div>
         </div>
       </div>
     </div>
@@ -340,7 +177,7 @@ import Folder from "../model/folder";
 import PAlbumCreateDialog from "../component/album/create/dialog.vue";
 
 export default {
-  name: "PPageAlbums",
+  name: "PPageCalendar",
   components: {
     PAlbumCreateDialog,
     PNavigation,
@@ -401,6 +238,7 @@ export default {
       listen: false,
       dirty: false,
       results: [],
+      byYear: [],
       loading: true,
       scrollDisabled: true,
       scrollDistance: window.innerHeight * 2,
@@ -750,6 +588,7 @@ export default {
       }
     },
     onClick(ev, index) {
+      console.log(index);
       const inputType = this.input.eval(ev, index);
       const longClick = inputType === ClickLong;
 
@@ -894,7 +733,7 @@ export default {
     },
     searchParams() {
       const params = {
-        count: this.searchCount(),
+        count: 10000,
         offset: this.offset,
       };
 
@@ -944,19 +783,40 @@ export default {
           }
 
           this.offset = resp.limit;
+          console.log('searching');
+          console.log(resp);
+
           this.results = resp.models;
+
+          let groupedByYear = resp.models.reduce((acc, current, index) => {
+            console.log(current.Year);
+            const year = current.Year;
+            if (!acc[year]) {
+              acc[year] = [];
+            }
+            current.Index = index;
+            acc[year].unshift(current);
+            return acc;
+          }, {});
+
+          console.log(groupedByYear);
+          let res = [];
+
+          for (let [index, item] of Object.entries(groupedByYear)) {
+            console.log(item);
+            const row = { year: index, albums: item };
+            res.unshift(row);
+          };
+
+          this.byYear = res;
+
+          console.log(this.byYear);
 
           this.scrollDisabled = resp.count < resp.limit;
 
           if (this.scrollDisabled) {
             if (!this.results.length) {
               this.$notify.warn(this.$gettext("No albums found"));
-            } else if (this.results.length === 1) {
-              this.$notify.info(this.$gettext("One album found"));
-            } else {
-              this.$notify.info(
-                this.$gettextInterpolate(this.$gettext("%{n} albums found"), { n: this.results.length })
-              );
             }
           } else {
             // this.$notify.info(this.$gettext('More than 20 albums found'));
@@ -967,7 +827,9 @@ export default {
             });
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          console.log(err);
+          this.$notify.error(err.message);
           this.reset();
         })
         .finally(() => {

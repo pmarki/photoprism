@@ -6,10 +6,29 @@ import (
 	"github.com/photoprism/photoprism/pkg/txt"
 )
 
+type ShareTarget struct {
+	Action  string `json:"action"`
+	Method  string `json:"method"`
+	Enctype string `json:"enctype"`
+	Params  Params `json:"params"`
+}
+
+type Params struct {
+	Title string `json:"title"`
+	Text  string `json:"text"`
+	Files []File `json:"files"`
+}
+
+type File struct {
+	Name   string `json:"name"`
+	Accept Accept `json:"accept"`
+}
+
+type Accept []string
+
 // Manifest represents a progressive web app manifest.
 type Manifest struct {
 	ManifestVersion     int           `json:"manifest_version"`
-	ID                  string        `json:"id"`
 	Name                string        `json:"name"`
 	ShortName           string        `json:"short_name,omitempty"`
 	Description         string        `json:"description,omitempty"`
@@ -29,13 +48,13 @@ type Manifest struct {
 	OptionalPermissions list.List     `json:"optional_permissions"`
 	HostPermissions     []string      `json:"host_permissions"`
 	Icons               Icons         `json:"icons"`
+	ShareTarget         ShareTarget   `json:"share_target"`
 }
 
 // NewManifest creates a new progressive web app manifest based on the config provided.
 func NewManifest(c Config) (m *Manifest) {
 	return &Manifest{
 		ManifestVersion: 2,
-		ID:              c.SiteUrl,
 		Name:            c.Name,
 		ShortName:       txt.Clip(c.Name, 32),
 		Description:     c.Description,
@@ -59,5 +78,20 @@ func NewManifest(c Config) (m *Manifest) {
 		OptionalPermissions: OptionalPermissions,
 		HostPermissions:     HostPermissions(c.SiteUrl, c.CdnUrl),
 		Icons:               NewIcons(c),
+		// ShareTarget: ShareTarget{
+		// 	Action:  "/library/sharetarget/",
+		// 	Method:  "POST",
+		// 	Enctype: "multipart/form-data",
+		// 	Params: Params{
+		// 		Title: "name",
+		// 		Text:  "description",
+		// 		Files: []File{
+		// 			{
+		// 				Name:   "images",
+		// 				Accept: Accept{"image/jpg"},
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 }

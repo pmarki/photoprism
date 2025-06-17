@@ -38,39 +38,6 @@
                 @keyup.enter="confirm"
               ></v-text-field>
             </v-col>
-            <v-col cols="12">
-              <v-text-field
-                v-model="model.Location"
-                hide-details
-                :label="$gettext('Location')"
-                :disabled="disabled"
-                class="input-location"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12">
-              <v-textarea
-                v-model="model.Description"
-                auto-grow
-                hide-details
-                autocomplete="off"
-                :label="$gettext('Description')"
-                :rows="1"
-                :disabled="disabled"
-                class="input-description"
-              ></v-textarea>
-            </v-col>
-            <v-col cols="12">
-              <v-combobox
-                v-model="category"
-                v-model:search="category"
-                class="input-category"
-                :items="categories"
-                :disabled="disabled"
-                :label="$gettext('Category')"
-                hide-details
-                @update:model-value="onChange"
-              ></v-combobox>
-            </v-col>
             <v-col cols="12" sm="6">
               <v-select
                 v-model="model.Order"

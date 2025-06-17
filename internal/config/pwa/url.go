@@ -22,12 +22,8 @@ func Shortcuts(baseUri string) Urls {
 			Url:  baseUri + "library/albums",
 		},
 		{
-			Name: "Places",
-			Url:  baseUri + "library/places",
-		},
-		{
-			Name: "Settings",
-			Url:  baseUri + "library/settings",
+			Name: "Folders",
+			Url:  baseUri + "library/folders",
 		},
 	}
 }

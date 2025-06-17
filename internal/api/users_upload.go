@@ -371,11 +371,12 @@ func ProcessUserUpload(router *gin.RouterGroup) {
 
 		// Update the user interface.
 		UpdateClientConfig()
-
+		log.Infof("upload: updating cover for %s", clean.Log(frm.Folder))
 		// Update album, label, and subject cover thumbs.
-		if coversErr := query.UpdateCovers(); coversErr != nil {
-			log.Warnf("upload: %s (update covers)", coversErr)
-		}
+		query.UpdateCover(frm.Folder)
+		// if coversErr := query.UpdateCover(frm.Folder); coversErr != nil {
+		// 	log.Warnf("upload: %s (update covers)", coversErr)
+		// }
 
 		c.JSON(http.StatusOK, i18n.Response{Code: http.StatusOK, Msg: msg})
 	})

@@ -65,19 +65,19 @@
           @click.stop="batchRestore"
           >{{ $gettext("Restore") }}</v-btn
         >
-        <v-btn
-          v-if="canEdit"
-          key="action-edit"
-          :title="$gettext('Edit')"
-          prepend-icon="mdi-pencil"
-          color="edit"
-          variant="elevated"
-          density="comfortable"
-          :disabled="selection.length === 0 || busy"
-          class="action-edit"
-          @click.stop="edit"
-          >{{ $gettext("Edit") }}</v-btn
-        >
+<!--        <v-btn-->
+<!--          v-if="canEdit"-->
+<!--          key="action-edit"-->
+<!--          :title="$gettext('Edit')"-->
+<!--          prepend-icon="mdi-pencil"-->
+<!--          color="edit"-->
+<!--          variant="elevated"-->
+<!--          density="comfortable"-->
+<!--          :disabled="selection.length === 0 || busy"-->
+<!--          class="action-edit"-->
+<!--          @click.stop="edit"-->
+<!--          >{{ $gettext("Edit") }}</v-btn-->
+<!--        >-->
         <v-btn
           v-if="canTogglePrivate && context !== 'archive' && context !== 'hidden'"
           key="action-private"

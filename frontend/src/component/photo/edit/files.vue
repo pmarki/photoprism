@@ -196,12 +196,6 @@
                             </td>
                             <td>{{ file.Pages }}</td>
                           </tr>
-                          <tr v-if="file.Software">
-                            <td>
-                              {{ $gettext(`Software`) }}
-                            </td>
-                            <td class="text-break">{{ file.Software }}</td>
-                          </tr>
                           <tr v-if="file.isAnimated()">
                             <td>
                               {{ $gettext(`Animated`) }}
@@ -242,14 +236,6 @@
                               {{ $gettext(`Yes`) }}
                             </td>
                           </tr>
-                          <tr v-if="file.HDR">
-                            <td>
-                              {{ $gettext(`High Dynamic Range (HDR)`) }}
-                            </td>
-                            <td>
-                              {{ $gettext(`Yes`) }}
-                            </td>
-                          </tr>
                           <tr v-if="file.Portrait">
                             <td>
                               {{ $gettext(`Portrait`) }}
@@ -257,12 +243,6 @@
                             <td>
                               {{ $gettext(`Yes`) }}
                             </td>
-                          </tr>
-                          <tr v-if="file.Projection">
-                            <td>
-                              {{ $gettext(`Projection`) }}
-                            </td>
-                            <td class="text-capitalize">{{ file.Projection }}</td>
                           </tr>
                           <tr v-if="file.AspectRatio">
                             <td>
@@ -311,31 +291,6 @@
                                   </v-list-item>
                                 </template>
                               </v-select>
-                            </td>
-                          </tr>
-                          <tr v-if="file.ColorProfile">
-                            <td>
-                              {{ $gettext(`Color Profile`) }}
-                            </td>
-                            <td class="text-break">{{ file.ColorProfile }}</td>
-                          </tr>
-                          <tr v-if="file.MainColor">
-                            <td>
-                              {{ $gettext(`Main Color`) }}
-                            </td>
-                            <td class="text-capitalize">{{ file.MainColor }}</td>
-                          </tr>
-                          <tr v-if="file?.Chroma > 0">
-                            <td>
-                              {{ $gettext(`Chroma`) }}
-                            </td>
-                            <td>
-                              <v-progress-linear
-                                v-tooltip="`${file.Chroma}%`"
-                                :model-value="file.Chroma"
-                                color="surface-variant"
-                                style="max-width: 300px"
-                              ></v-progress-linear>
                             </td>
                           </tr>
                           <tr v-if="file.Missing">

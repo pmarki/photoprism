@@ -185,7 +185,6 @@
 .cards-view .result,
 .mosaic-view .result {
     transition: none;
-    box-shadow: none !important;
 }
 
 .search-results {
@@ -206,7 +205,6 @@
 
 .cards-view > div {
     margin: 0;
-    padding: 4px;
 }
 
 .mosaic-view > div {
@@ -252,6 +250,32 @@
     background-repeat: no-repeat;
     transition: none !important;
     overflow: hidden !important;
+}
+
+.cards-view .preview img {
+    width: 46% !important;
+}
+
+.cards-view .preview .tile0 {
+    top: 3%;
+    left: 3%;
+    /*transform: rotate(7deg);*/
+}
+
+.cards-view .preview .tile1 {
+    top: 3%;
+    right: 3%;
+    /*transform: rotate(-3deg);*/
+}
+.cards-view .preview .tile2 {
+    bottom: 3%;
+    left: 3%;
+    /*transform: rotate(-10deg);*/
+}
+.cards-view .preview .tile3 {
+    bottom: 3%;
+    right: 3%;
+    /*transform: rotate(2deg);*/
 }
 
 .search-results.list-view .v-table>.v-table__wrapper>table>thead>tr>th {

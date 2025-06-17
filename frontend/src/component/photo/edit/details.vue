@@ -34,19 +34,6 @@
                 density="comfortable"
                 class="input-title"
               ></v-text-field>
-              <v-textarea
-                v-model="view.model.Caption"
-                :append-inner-icon="view.model.CaptionSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                hide-details
-                autocomplete="off"
-                auto-grow
-                :label="$gettext('Caption')"
-                placeholder=""
-                :rows="1"
-                density="comfortable"
-                class="input-caption"
-              ></v-textarea>
             </v-col>
           </v-row>
           <v-row dense>
@@ -184,20 +171,6 @@
                 density="comfortable"
                 class="input-subject"
               ></v-textarea>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="view.model.Details.Artist"
-                :append-inner-icon="view.model.Details.ArtistSrc === 'manual' ? 'mdi-check' : ''"
-                :disabled="disabled"
-                :rules="[textRule]"
-                hide-details
-                autocomplete="off"
-                :label="$gettext('Artist')"
-                placeholder=""
-                density="comfortable"
-                class="input-artist"
-              ></v-text-field>
             </v-col>
             <v-col cols="12" md="8">
               <v-textarea
