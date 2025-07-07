@@ -294,7 +294,6 @@ func UpdateCover(albumUID string) {
 	}
 
 	thumb := strings.Join(thumbs, " ")
-	log.Infof("thumbs for %s: %s", albumUID, thumb)
 
 	var res *gorm.DB
 	res = Db().Table(entity.Album{}.TableName()).Where("album_UID = ?", albumUID).Update("thumb", thumb)

@@ -78,20 +78,20 @@ func NewManifest(c Config) (m *Manifest) {
 		OptionalPermissions: OptionalPermissions,
 		HostPermissions:     HostPermissions(c.SiteUrl, c.CdnUrl),
 		Icons:               NewIcons(c),
-		// ShareTarget: ShareTarget{
-		// 	Action:  "/library/sharetarget/",
-		// 	Method:  "POST",
-		// 	Enctype: "multipart/form-data",
-		// 	Params: Params{
-		// 		Title: "name",
-		// 		Text:  "description",
-		// 		Files: []File{
-		// 			{
-		// 				Name:   "images",
-		// 				Accept: Accept{"image/jpg"},
-		// 			},
-		// 		},
-		// 	},
-		// },
+		ShareTarget: ShareTarget{
+			Action:  "/pwa/sharetarget/",
+			Method:  "POST",
+			Enctype: "multipart/form-data",
+			Params: Params{
+				Title: "name",
+				Text:  "description",
+				Files: []File{
+					{
+						Name:   "images",
+						Accept: Accept{"image/*", "video/*"},
+					},
+				},
+			},
+		},
 	}
 }

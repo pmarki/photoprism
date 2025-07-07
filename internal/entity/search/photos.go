@@ -48,6 +48,13 @@ func PhotoIds(frm form.SearchPhotos) (files PhotoResults, count int, err error) 
 	return searchPhotos(frm, nil, "photos.id, photos.photo_uid, files.file_uid")
 }
 
+// PhotoHash finds photo and file hash based on the search form provided and returns them as PhotoResults.
+func PhotoHash(frm form.SearchPhotos) (files PhotoResults, count int, err error) {
+	frm.Merged = false
+	frm.Primary = true
+	return searchPhotos(frm, nil, "files.file_hash")
+}
+
 // searchPhotos finds photos based on the search form and user session then returns them as PhotoResults.
 func searchPhotos(frm form.SearchPhotos, sess *entity.Session, resultCols string) (results PhotoResults, count int, err error) {
 	start := time.Now()

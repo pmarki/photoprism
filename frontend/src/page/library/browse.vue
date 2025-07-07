@@ -1,27 +1,40 @@
 <template>
   <div ref="page" tabindex="1" class="p-page p-page-files">
-    <v-form
-      ref="form"
-      validate-on="invalid-input"
-      class="p-files-search p-page__navigation"
-      @submit.prevent="updateQuery"
-    >
-      <v-toolbar flat color="secondary" :density="$vuetify.display.smAndDown ? 'compact' : 'default'">
-        <v-toolbar-title>
-          <router-link to="/index/files">
-            {{ $gettext(`Originals`) }}
-          </router-link>
+    <p-navigation>
+      <template v-slot:title>
+        <span class="text-capitalize">{{ this.$route.name }}</span>
+      </template>
 
-          <router-link v-for="dir in breadcrumbs" :key="dir.key" :to="dir.uri">
-            <v-icon>{{ navIcon }}</v-icon>
-            {{ dir.name }}
-          </router-link>
-        </v-toolbar-title>
-
+      <template v-slot:menu-icons>
         <v-btn :title="$gettext('Refresh')" icon="mdi-refresh" tabindex="1" class="action-reload" @click.stop="refresh">
         </v-btn>
-      </v-toolbar>
-    </v-form>
+      </template>
+      <template v-slot:menu-actions>
+<!--        <p-action-menu :items="menuActions" button-class="ms-1"></p-action-menu>-->
+      </template>
+    </p-navigation>
+
+<!--    <v-form-->
+<!--      ref="form"-->
+<!--      validate-on="invalid-input"-->
+<!--      class="p-files-search p-page__navigation"-->
+<!--      @submit.prevent="updateQuery"-->
+<!--    >-->
+<!--      <v-toolbar flat color="secondary" :density="$vuetify.display.smAndDown ? 'compact' : 'default'">-->
+<!--        <v-toolbar-title>-->
+<!--          <router-link to="/index/files">-->
+<!--            {{ $gettext(`Originals`) }}-->
+<!--          </router-link>-->
+
+<!--          <router-link v-for="dir in breadcrumbs" :key="dir.key" :to="dir.uri">-->
+<!--            <v-icon>{{ navIcon }}</v-icon>-->
+<!--            {{ dir.name }}-->
+<!--          </router-link>-->
+<!--        </v-toolbar-title>-->
+
+
+<!--      </v-toolbar>-->
+<!--    </v-form>-->
 
     <div v-if="loading" class="p-page__loading">
       <p-loading></p-loading>
@@ -118,10 +131,11 @@ import { MaxItems } from "common/clipboard";
 import download from "common/download";
 import { Input, InputInvalid, ClickShort, ClickLong } from "common/input";
 import PLoading from "component/loading.vue";
+import PNavigation from "../../component/navigation.vue";
 
 export default {
   name: "PPageFiles",
-  components: { PLoading },
+  components: { PNavigation, PLoading },
   props: {
     staticFilter: {
       type: Object,

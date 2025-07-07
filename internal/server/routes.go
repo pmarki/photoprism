@@ -25,6 +25,12 @@ func registerRoutes(router *gin.Engine, conf *config.Config) {
 	// Register WebDAV server routes.
 	registerWebDAVRoutes(router, conf)
 
+	// Handle sharing files from PWA
+	registerShareTargetRoute(router, conf)
+
+	// Register routes for photo frame
+	registerPhotoShowRoute(router, conf)
+
 	// Register sharing routes starting with "/s".
 	registerSharingRoutes(router, conf)
 
